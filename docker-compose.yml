@@ -1,0 +1,46 @@
+version: "3.8"
+
+services:
+  ollama:
+    image: ollama/ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_cache:/root/.ollama
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:11434/api/tags"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  ollama-pull:
+    image: ollama/ollama
+    depends_on:
+      ollama:
+        condition: service_healthy
+    entrypoint: ["ollama", "pull", "qwen2.5:0.5b"]
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    restart: "no"
+
+  scorer:
+    build:
+      context: ./src
+      dockerfile: Containerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - MODEL_ENDPOINT=${MODEL_ENDPOINT:-http://ollama:11434/v1}
+      - MODEL_NAME=${MODEL_NAME:-qwen2.5:0.5b}
+      - DEMO_MODE=${DEMO_MODE:-false}
+    depends_on:
+      ollama:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  ollama_cache:

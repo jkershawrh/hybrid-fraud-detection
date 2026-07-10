@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-scorer
+  labels:
+    app.kubernetes.io/name: hybrid-fraud-detection
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.app.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: hybrid-fraud-detection
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: hybrid-fraud-detection
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: scorer
+          image: {{ .Values.app.image }}
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+          env:
+            {{- if .Values.model.endpoint }}
+            - name: MODEL_ENDPOINT
+              value: {{ .Values.model.endpoint | quote }}
+            {{- end }}
+            - name: MODEL_NAME
+              value: {{ .Values.model.name | default "granite-2b-cpu" | quote }}
+            {{- if .Values.model.api_key }}
+            - name: MODEL_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-model-secret
+                  key: api-key
+                  optional: true
+            {{- end }}
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi

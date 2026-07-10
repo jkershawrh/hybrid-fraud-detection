@@ -1,0 +1,66 @@
+# Benchmark Rubric -- technique-specific performance validation
+# Governs Stage 4 of the validation matrix.
+
+benchmark_rubric:
+  version: "1.0"
+  description: "Performance validation for hybrid fraud detection scoring"
+
+  verification_policy:
+    verified_means: "Measured by a live endpoint in the target environment"
+    public_claim_rules:
+      - "Do not publish speedup claims unless claim_registry marks them verified"
+      - "If a feature is configured but unmeasured, present as 'configured and measured'"
+      - "Cost claims use 'estimate' language, never 'guaranteed'"
+
+  run_modes:
+    local:
+      description: "Unit tests, contract validation, static checks"
+      no_cluster_required: true
+    compose:
+      description: "Full docker-compose stack with live scoring"
+      requires: ["podman", "docker-compose"]
+    openshift:
+      description: "Helm deployment on OpenShift with full validation"
+      requires: ["oc", "helm"]
+
+  benchmarks:
+    scoring_latency_demo:
+      description: "Single transaction scoring latency in demo mode"
+      test_input:
+        amount: 15000
+        country: "NG"
+        category: "wire_transfer"
+      max_ms: 500
+      required_fields: ["risk_score", "risk_level", "latency_ms", "model"]
+
+    scoring_latency_llm_skip:
+      description: "Scoring latency when rule engine is confident (LLM skipped)"
+      test_input:
+        amount: 15000
+        country: "NG"
+        category: "crypto"
+      max_ms: 10
+      expected_behavior: "LLM skipped, rule_score > 90"
+      required_fields: ["risk_score", "llm_skipped", "skip_reason"]
+
+    scoring_latency_live:
+      description: "Single transaction scoring latency with live LLM"
+      test_input:
+        amount: 5000
+        country: "RU"
+        category: "wire_transfer"
+      max_ms: 5000
+      minimum_speedup_for_claim: 1.5
+      required_fields: ["risk_score", "risk_level", "latency_ms", "model", "llm_score"]
+
+    batch_throughput:
+      description: "Batch scoring of 100 transactions"
+      batch_size: 100
+      max_ms: 5000
+      required_fields: ["results", "total", "avg_latency_ms"]
+
+    skip_rate_measurement:
+      description: "LLM skip rate across mixed transaction distribution"
+      sample_size: 1000
+      expected_range: "60-70%"
+      required_fields: ["llm_skip_rate_pct", "llm_calls", "llm_skips"]

@@ -1,0 +1,264 @@
+openapi: "3.1.0"
+info:
+  title: Hybrid Fraud Detection API
+  description: >
+    Hybrid fraud scoring combining deterministic rule engines with LLM risk
+    assessment on Intel Xeon CPU. Provides transaction scoring, batch scoring,
+    and inference statistics.
+  version: "1.0.0"
+  contact:
+    name: Red Hat AI Quickstarts
+    url: https://github.com/rh-ai-quickstart
+
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      summary: Health check
+      description: Returns service health status and model connectivity.
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+
+  /api/v1/score:
+    post:
+      operationId: scoreTransaction
+      summary: Score a single transaction
+      description: >
+        Accepts a financial transaction, runs it through the hybrid scoring
+        pipeline (deterministic rule engine + conditional LLM assessment),
+        and returns a risk score with explainable signals.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransactionRequest"
+      responses:
+        "200":
+          description: Transaction scored successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScoreResponse"
+        "422":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/batch:
+    post:
+      operationId: batchScore
+      summary: Score multiple transactions
+      description: >
+        Accepts an array of transactions and returns scoring results for each.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BatchRequest"
+      responses:
+        "200":
+          description: Batch scored successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchResponse"
+
+  /api/v1/stats:
+    get:
+      operationId: getStats
+      summary: Scoring statistics
+      description: >
+        Returns cumulative scoring statistics including total scored,
+        average latency, and LLM skip rate.
+      responses:
+        "200":
+          description: Scoring stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatsResponse"
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      required: [status, mode, model]
+      properties:
+        status:
+          type: string
+          example: "ok"
+        mode:
+          type: string
+          enum: [live, demo]
+          example: "demo"
+        model:
+          type: string
+          example: "granite-2b-cpu"
+
+    TransactionRequest:
+      type: object
+      required: [amount]
+      properties:
+        amount:
+          type: number
+          format: float
+          example: 15000.00
+        currency:
+          type: string
+          default: "USD"
+          example: "USD"
+        country:
+          type: string
+          default: "US"
+          example: "NG"
+        category:
+          type: string
+          default: "retail"
+          example: "wire_transfer"
+        description:
+          type: string
+          example: "International wire transfer"
+
+    ScoreResponse:
+      type: object
+      required:
+        - risk_level
+        - risk_score
+        - rule_score
+        - signals
+        - llm_skipped
+        - latency_ms
+        - model
+        - ai_disclaimer
+      properties:
+        risk_level:
+          type: string
+          enum: [low, medium, high, critical]
+          example: "high"
+        risk_score:
+          type: number
+          format: float
+          example: 72.0
+        rule_score:
+          type: number
+          format: float
+          example: 80.0
+        llm_score:
+          type: number
+          format: float
+          nullable: true
+          example: 60.0
+        signals:
+          type: array
+          items:
+            $ref: "#/components/schemas/Signal"
+        llm_skipped:
+          type: boolean
+          example: false
+        skip_reason:
+          type: string
+          nullable: true
+          example: null
+        latency_ms:
+          type: number
+          format: float
+          example: 142.5
+        model:
+          type: string
+          example: "granite-2b-cpu"
+        ai_disclaimer:
+          type: string
+          example: "Rule-based signals are deterministic. LLM risk assessment is AI-generated -- verify critical decisions."
+
+    Signal:
+      type: object
+      required: [signal, weight, detail]
+      properties:
+        signal:
+          type: string
+          example: "high_amount"
+        weight:
+          type: integer
+          example: 30
+        detail:
+          type: string
+          example: "$15,000 exceeds $10K threshold"
+
+    BatchRequest:
+      type: object
+      required: [transactions]
+      properties:
+        transactions:
+          type: array
+          items:
+            $ref: "#/components/schemas/TransactionRequest"
+
+    BatchResponse:
+      type: object
+      required: [results, total, avg_latency_ms]
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScoreResponse"
+        total:
+          type: integer
+          example: 5
+        avg_latency_ms:
+          type: number
+          format: float
+          example: 85.3
+
+    StatsResponse:
+      type: object
+      required:
+        - total_scored
+        - avg_latency_ms
+        - llm_skip_rate_pct
+        - llm_calls
+        - llm_skips
+        - mode
+      properties:
+        total_scored:
+          type: integer
+          example: 1042
+        avg_latency_ms:
+          type: number
+          format: float
+          example: 95.2
+        llm_skip_rate_pct:
+          type: number
+          format: float
+          example: 65.3
+        llm_calls:
+          type: integer
+          example: 362
+        llm_skips:
+          type: integer
+          example: 680
+        mode:
+          type: string
+          enum: [live, demo]
+          example: "demo"
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+        detail:
+          type: string

@@ -1,0 +1,9 @@
+apiVersion: v2
+name: hybrid-fraud-detection
+description: Combine deterministic rule engines with LLM reasoning for explainable, auditable fraud detection.
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+maintainers:
+  - name: Red Hat AI Quickstarts
+    url: https://github.com/rh-ai-quickstart
