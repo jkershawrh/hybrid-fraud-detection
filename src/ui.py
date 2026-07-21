@@ -166,10 +166,9 @@ EXAMPLE_BATCH = json.dumps([
 ], indent=2)
 
 with gr.Blocks(title="Hybrid Fraud Detection") as demo:
-    gr.Markdown("# Hybrid Fraud Detection Scorer")
+    gr.Markdown("# Fraud Detection Dashboard")
     gr.Markdown(
-        "Deterministic rule engine (60%) + LLM risk assessment (40%) "
-        "on Intel Xeon CPU."
+        "AI-powered transaction screening with explainable risk scoring."
     )
 
     with gr.Tab("Score Transaction"):

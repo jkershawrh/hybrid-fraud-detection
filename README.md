@@ -1,6 +1,6 @@
-# Detect financial fraud with hybrid AI scoring
+# Detect financial fraud with explainable AI scoring
 
-Combine deterministic rule engines with LLM reasoning for explainable, auditable fraud detection.
+Catch fraud faster with AI scoring that auditors and regulators can trust, combining rules and LLM reasoning.
 
 ## Table of Contents
 
@@ -25,7 +25,7 @@ Combine deterministic rule engines with LLM reasoning for explainable, auditable
 
 ## Overview
 
-Financial institutions need to screen transactions for fraud in real time while meeting regulatory requirements for explainability. Pure machine-learning approaches produce opaque scores that compliance teams cannot audit, while pure rule engines miss novel fraud patterns. This quickstart deploys a hybrid scoring pipeline that combines both approaches, giving analysts deterministic signal explanations alongside AI risk assessment -- all running on Intel Xeon CPUs without GPU infrastructure.
+Financial institutions need to screen transactions for fraud in real time while meeting regulatory requirements for explainability. Pure machine-learning approaches produce opaque scores that compliance teams cannot audit, while pure rule engines miss novel fraud patterns. This quickstart deploys a hybrid scoring pipeline that combines both approaches, giving analysts deterministic signal explanations alongside AI risk assessment -- no GPU infrastructure required.
 
 ## Who is this for
 
@@ -44,11 +44,11 @@ Financial institutions need to screen transactions for fraud in real time while 
 
 Fraud detection at scale presents a fundamental tension: rule-based systems provide the auditability that regulators demand, but they cannot adapt to emerging fraud patterns. Large language models can reason about novel transaction patterns, but their outputs lack the deterministic traceability that banking compliance requires. This quickstart resolves that tension with a hybrid scoring architecture.
 
-The hybrid scorer runs every transaction through a deterministic rule engine first. The rule engine checks for high-value amounts (above $10,000), high-risk jurisdictions, suspicious transaction categories (wire transfers, cryptocurrency, gambling), round-amount structuring patterns, and other configurable signals. Each detected signal adds a fixed, auditable weight to produce a rule score from 0 to 100.
+The hybrid scorer runs every transaction through a deterministic rule engine first. The rule engine checks for high-value amounts (above $10,000), high-risk jurisdictions, suspicious transaction categories (wire transfers, cryptocurrency, gambling), round-amount structuring patterns, and other configurable signals. Each detected signal produces an auditable trail that compliance teams can review and explain to regulators.
 
-A conditional pipeline then decides whether to invoke the LLM. When the rule engine is confident -- scores above 90 (clearly fraudulent) or below 10 (clearly legitimate) -- the LLM call is skipped entirely. This reduces LLM inference load by an estimated 60-70% in typical transaction distributions, cutting latency and compute cost. For ambiguous transactions (rule scores between 10 and 90), the LLM provides an independent 0-100 risk assessment via Ollama serving qwen2.5:0.5b. The final score combines both: 60% rule engine weight and 40% LLM weight, giving compliance teams a score they can decompose and explain.
+A conditional pipeline then decides whether AI review is needed. When the rule engine is confident -- clearly fraudulent or clearly legitimate -- the AI call is skipped entirely, reducing processing costs by an estimated 60-70%. For ambiguous transactions, the AI provides an independent risk assessment. The final score combines both sources, giving compliance teams a result they can decompose and explain at every level.
 
-Running on Intel Xeon processors provides advantages for this workload. The rule engine is entirely CPU-bound and benefits from high single-thread performance. The conditional skip pattern means the majority of transactions never touch the LLM at all, and when they do, CPU-optimized inference keeps the full pipeline on a single infrastructure tier without GPU dependencies.
+This architecture keeps infrastructure simple. The rule engine handles the majority of transactions at minimal cost, and AI inference runs on standard CPU hardware without GPU dependencies -- reducing both capital expense and operational complexity for financial institutions.
 
 ### Architecture diagrams
 
@@ -272,8 +272,8 @@ oc delete project hybrid-fraud-detection
 
 ## Tags
 
-- **Title:** Detect financial fraud with hybrid AI scoring
-- **Description:** Combine deterministic rule engines with LLM reasoning for explainable, auditable fraud detection.
+- **Title:** Detect financial fraud with explainable AI scoring
+- **Description:** Catch fraud faster with AI scoring that auditors and regulators can trust, combining rules and LLM reasoning.
 - **Industry:** Banking and securities
 - **Product:** Red Hat OpenShift AI
 - **Use case:** AI inference

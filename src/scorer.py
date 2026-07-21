@@ -349,8 +349,8 @@ class HybridScorer:
 # ---------------------------------------------------------------------------
 
 app = FastAPI(
-    title="Hybrid Fraud Detection",
-    description="Deterministic rule engine + LLM risk assessment on Intel Xeon CPU",
+    title="Fraud Detection API",
+    description="AI-powered transaction screening with explainable risk scoring",
     version="1.0.0",
 )
 
