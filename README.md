@@ -103,6 +103,18 @@ flowchart LR
 
 The Gradio UI provides three tabs: single transaction scoring with risk level badges and signal breakdowns, batch analysis for bulk transaction processing, and a statistics dashboard showing LLM skip rates and latency metrics.
 
+## Intel Hardware
+
+This quickstart runs on **Intel Xeon** processors. All inference is CPU-based with no GPU required.
+
+| Component | Intel Hardware |
+|-----------|---------------|
+| **Rule Engine** | Deterministic scoring on Intel Xeon CPU |
+| **LLM Inference (vLLM)** | qwen2.5:0.5b on Intel Xeon with Ollama |
+| **Infrastructure** | Red Hat OpenShift on Intel Xeon worker nodes |
+
+> **Powered by Intel** -- This quickstart is part of the Red Hat + Intel AI Inference Partnership.
+
 ## Requirements
 
 ### Minimum hardware requirements
