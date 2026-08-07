@@ -290,14 +290,14 @@ class HybridScorer:
         llm_skipped = False
         skip_reason: Optional[str] = None
 
-        if rule_score > SKIP_HIGH_THRESHOLD:
+        if rule_score >= SKIP_HIGH_THRESHOLD:
             llm_skipped = True
-            skip_reason = f"Rule score {rule_score:.0f} > {SKIP_HIGH_THRESHOLD} -- rule engine confident (high risk)"
+            skip_reason = f"Rule score {rule_score:.0f} >= {SKIP_HIGH_THRESHOLD} -- rule engine confident (high risk)"
             combined_score = rule_score
             self.stats.llm_skips += 1
-        elif rule_score < SKIP_LOW_THRESHOLD:
+        elif rule_score <= SKIP_LOW_THRESHOLD:
             llm_skipped = True
-            skip_reason = f"Rule score {rule_score:.0f} < {SKIP_LOW_THRESHOLD} -- rule engine confident (low risk)"
+            skip_reason = f"Rule score {rule_score:.0f} <= {SKIP_LOW_THRESHOLD} -- rule engine confident (low risk)"
             combined_score = rule_score
             self.stats.llm_skips += 1
         else:

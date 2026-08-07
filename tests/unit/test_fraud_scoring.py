@@ -81,9 +81,8 @@ class TestHighRiskTransaction:
         result = hybrid_scorer.score(tx)
 
         # Rule score: 10 (base) + 30 (high_amount) + 25 (high_risk_country)
-        #             + 15 (high_risk_category) = 80
-        # Combined: 0.6*80 + 0.4*75 = 48 + 30 = 78 -> but rule_score=80 > 90? No, 80 < 90
-        # so LLM is called. Combined = 78.0
+        #             + 15 (high_risk_category) + 5 (round_amount) = 85
+        # 85 < 90 threshold so LLM is called. Combined = 0.6*85 + 0.4*75 = 81
         assert result.risk_score > 70, f"Expected > 70, got {result.risk_score}"
         assert result.risk_level in ("high", "critical")
 
@@ -104,9 +103,8 @@ class TestLowRiskTransaction:
         result = hybrid_scorer.score(tx)
 
         # Rule score: 10 (base only, no signals triggered)
-        # 10 < SKIP_LOW_THRESHOLD(10) is False (not strictly less than)
-        # So if rule_score == 10, it is NOT < 10, LLM is called
-        # Combined: 0.6*10 + 0.4*10 = 6 + 4 = 10
+        # 10 <= SKIP_LOW_THRESHOLD(10) so LLM is skipped
+        # Combined = rule_score = 10
         assert result.risk_score < 30, f"Expected < 30, got {result.risk_score}"
         assert result.risk_level == "low"
 
@@ -218,7 +216,7 @@ class TestWeightedCombination:
 class TestConditionalSkipHigh:
 
     def test_conditional_skip_confident_high(self, hybrid_scorer, mock_llm_scorer):
-        """rule_score > 90 should skip LLM entirely."""
+        """rule_score >= 90 should skip LLM entirely."""
         # Transaction that triggers many signals: 10 + 30 + 25 + 15 + 10 + 5 = 95
         tx = _make_tx(amount=15000, country="NG", category="crypto")
         result = hybrid_scorer.score(tx)
@@ -238,10 +236,7 @@ class TestConditionalSkipHigh:
 class TestConditionalSkipLow:
 
     def test_conditional_skip_confident_low(self, rule_engine):
-        """rule_score < 10 should skip LLM entirely.
-
-        Base score is 10, so we need a custom rule engine that produces < 10.
-        """
+        """rule_score <= 10 should skip LLM entirely."""
         mock_llm = MagicMock()
 
         # Create a rule engine that returns a very low score
