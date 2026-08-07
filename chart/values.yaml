@@ -16,4 +16,4 @@ model:
 # Application configuration
 app:
   replicas: 1
-  image: quay.io/rh-ai-quickstart/hybrid-fraud-detection:latest
+  image: quay.io/redhat-gpte/hybrid-fraud-detection:latest
