@@ -8,9 +8,21 @@ PYTEST ?= $(PYTHON) -m pytest
 HELM ?= helm
 PODMAN ?= podman
 
-.PHONY: help test-all test-contracts test-infra test-unit test-integration \
-        test-benchmarks test-publication audit-claims status \
+NAMESPACE ?= $(QUICKSTART_NAME)
+
+.PHONY: help install uninstall test-all test-contracts test-infra test-unit \
+        test-integration test-benchmarks test-publication audit-claims status \
         build compose-up compose-down lint
+
+# ── RHDP Deploy ───────────────────────────────────────────────────────
+install: ## Deploy to OpenShift via Helm
+	$(HELM) upgrade --install $(QUICKSTART_NAME) chart/ \
+		--namespace $(NAMESPACE) \
+		--create-namespace \
+		--wait --timeout 120s
+
+uninstall: ## Remove from OpenShift
+	$(HELM) uninstall $(QUICKSTART_NAME) --namespace $(NAMESPACE) --ignore-not-found
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
