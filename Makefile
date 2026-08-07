@@ -9,6 +9,7 @@ HELM ?= helm
 PODMAN ?= podman
 
 NAMESPACE ?= $(QUICKSTART_NAME)
+EXTRA_HELM_ARGS ?=
 
 .PHONY: help install uninstall test-all test-contracts test-infra test-unit \
         test-integration test-benchmarks test-publication audit-claims status \
@@ -19,7 +20,8 @@ install: ## Deploy to OpenShift via Helm
 	$(HELM) upgrade --install $(QUICKSTART_NAME) chart/ \
 		--namespace $(NAMESPACE) \
 		--create-namespace \
-		--wait --timeout 120s
+		--wait --timeout 120s \
+		$(EXTRA_HELM_ARGS)
 
 uninstall: ## Remove from OpenShift
 	$(HELM) uninstall $(QUICKSTART_NAME) --namespace $(NAMESPACE) --ignore-not-found
