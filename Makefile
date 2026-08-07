@@ -2,7 +2,7 @@
 # CDD → TDD → EDD: Write tests RED, deploy until GREEN
 # Each stage gates the next. Run: make test-all
 
-QUICKSTART_NAME ?= $(shell basename $(CURDIR))
+QUICKSTART_NAME ?= fraud-detection
 PYTHON ?= python3
 PYTEST ?= $(PYTHON) -m pytest
 HELM ?= helm
