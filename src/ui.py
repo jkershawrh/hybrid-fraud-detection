@@ -33,7 +33,7 @@ RISK_COLORS = {
 
 DISCLAIMER = (
     "Rule-based signals are deterministic. "
-    "LLM risk assessment is AI-generated -- verify critical decisions with compliance team."
+    "LLM risk assessment is AI-generated; this educational demo is not for real decisions."
 )
 
 
@@ -101,6 +101,8 @@ def score_transaction(amount: float, country: str, category: str, description: s
             <td style="padding:4px 12px;">{llm_display}</td></tr>
         <tr><td style="padding:4px 12px;"><b>Latency</b></td>
             <td style="padding:4px 12px;">{result['latency_ms']:.1f} ms</td></tr>
+        <tr><td style="padding:4px 12px;"><b>Scorer</b></td>
+            <td style="padding:4px 12px;">{result['model']}</td></tr>
       </table>
       {skip_info}
       <p><b>Detected Signals:</b></p>
@@ -151,6 +153,7 @@ def get_stats() -> str:
         f"**LLM Skip Rate:** {stats['llm_skip_rate_pct']:.1f}%\n\n"
         f"**LLM Calls:** {stats['llm_calls']}\n\n"
         f"**LLM Skips:** {stats['llm_skips']}\n\n"
+        f"**LLM Failures:** {stats['llm_failures']}\n\n"
         f"**Mode:** {stats['mode']}"
     )
 
@@ -168,7 +171,7 @@ EXAMPLE_BATCH = json.dumps([
 with gr.Blocks(title="Hybrid Fraud Detection") as demo:
     gr.Markdown("# Fraud Detection Dashboard")
     gr.Markdown(
-        "AI-powered transaction screening with explainable risk scoring."
+        "Explore hybrid transaction scoring with visible example rules and model output."
     )
 
     with gr.Tab("Score Transaction"):

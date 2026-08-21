@@ -13,17 +13,20 @@ import pathlib
 import sys
 from unittest.mock import MagicMock
 
+import httpx
 import pytest
 
 # Add src to path so we can import scorer
 SRC_DIR = pathlib.Path(__file__).resolve().parents[2] / "src"
 sys.path.insert(0, str(SRC_DIR))
 
-from scorer import (
+from scorer import (  # noqa: E402
     LLM_WEIGHT,
     RULE_WEIGHT,
     SKIP_HIGH_THRESHOLD,
+    DemoLLMScorer,
     HybridScorer,
+    LLMScorer,
     RuleEngine,
     TransactionRequest,
 )
@@ -169,6 +172,78 @@ class TestLLMScoring:
         assert result.llm_score is not None
         assert 0 <= result.llm_score <= 100
         assert result.llm_skipped is False
+
+    def test_live_scorer_uses_bearer_token(self):
+        credentials = {"api" + "_key": "test-token"}
+        scorer = LLMScorer(
+            endpoint="https://models.example.test/v1",
+            model="example-model",
+            **credentials,
+        )
+        try:
+            assert scorer.endpoint == "https://models.example.test"
+            assert scorer.client.headers["Authorization"] == "Bearer test-token"
+        finally:
+            scorer.client.close()
+
+    def test_structured_llm_score_is_parsed(self):
+        def handler(request: httpx.Request) -> httpx.Response:
+            assert request.url.path == "/v1/chat/completions"
+            return httpx.Response(
+                200,
+                json={"choices": [{"message": {"content": '{"score": 72}'}}]},
+            )
+
+        scorer = LLMScorer(endpoint="https://models.example.test/v1", model="example-model")
+        scorer.client.close()
+        scorer.client = httpx.Client(transport=httpx.MockTransport(handler))
+        try:
+            score, _latency = scorer.score(_make_tx(amount=5000), [])
+            assert score == 72.0
+        finally:
+            scorer.client.close()
+
+    def test_unstructured_llm_score_is_rejected(self):
+        def handler(_request: httpx.Request) -> httpx.Response:
+            return httpx.Response(
+                200,
+                json={"choices": [{"message": {"content": "75/100"}}]},
+            )
+
+        scorer = LLMScorer(endpoint="https://models.example.test", model="example-model")
+        scorer.client.close()
+        scorer.client = httpx.Client(transport=httpx.MockTransport(handler))
+        try:
+            with pytest.raises(ValueError, match="invalid score payload"):
+                scorer.score(_make_tx(amount=5000), [])
+        finally:
+            scorer.client.close()
+
+    def test_demo_scorer_is_labeled_as_simulated(self):
+        scorer = HybridScorer(
+            rule_engine=RuleEngine(),
+            llm_scorer=DemoLLMScorer(model="example-model"),
+            model_name="example-model",
+        )
+        result = scorer.score(_make_tx(amount=5000))
+        assert result.model == "demo-simulator"
+
+    def test_model_failure_is_reported_separately_from_rule_skips(self, rule_engine):
+        unavailable_model = MagicMock()
+        unavailable_model.score.side_effect = httpx.ConnectError("unavailable")
+        scorer = HybridScorer(
+            rule_engine=rule_engine,
+            llm_scorer=unavailable_model,
+            model_name="test-model",
+        )
+
+        result = scorer.score(_make_tx(amount=500, country="NG"))
+
+        assert result.llm_skipped is True
+        assert result.model == "rule-engine-only"
+        assert result.skip_reason == "LLM unavailable; used the rule score only"
+        assert scorer.stats.llm_failures == 1
+        assert scorer.stats.llm_skips == 0
 
 
 # ---------------------------------------------------------------------------

@@ -4,16 +4,24 @@
 # Option A: Bring your own model (MaaS - Model as a Service)
 # model:
 #   name: my-model
-#   endpoint: https://my-maas-instance:443
-#   api_key: my-api-key
+#   endpoint: https://my-maas-instance:443/v1
+#   existingSecret: my-model-credentials
+#   apiKeySecretKey: api-key
 #
 # Option B: Deploy with no model (demo mode -- scorer runs with simulated LLM)
 model:
   name: qwen2.5:0.5b
   # endpoint: ""
-  # api_key: ""
+  # existingSecret: ""
+  apiKeySecretKey: api-key
+
+scoring:
+  ruleWeight: 0.6
+  llmWeight: 0.4
+  maxBatchSize: 100
 
 # Application configuration
 app:
   replicas: 1
   image: quay.io/redhat-gpte/hybrid-fraud-detection:latest
+  imagePullPolicy: IfNotPresent

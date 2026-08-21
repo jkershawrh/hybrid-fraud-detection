@@ -1,10 +1,16 @@
 """Stage 0: Contract validation — OpenAPI specs parse and refs resolve."""
 import pathlib
+import sys
 
 import pytest
 import yaml
+from openapi_spec_validator import validate
 
 CONTRACTS_DIR = pathlib.Path(__file__).resolve().parents[2] / "contracts" / "openapi"
+SRC_DIR = pathlib.Path(__file__).resolve().parents[2] / "src"
+sys.path.insert(0, str(SRC_DIR))
+
+from scorer import app  # noqa: E402
 
 
 def _load_specs():
@@ -26,6 +32,7 @@ class TestOpenAPIContractValidation:
     def test_spec_parses(self, spec_file):
         spec = yaml.safe_load((CONTRACTS_DIR / spec_file).read_text())
         assert "openapi" in spec or "swagger" in spec, f"{spec_file} missing openapi version"
+        validate(spec)
 
     @pytest.mark.parametrize("spec_file", [s.name for s in _load_specs()] if CONTRACTS_DIR.exists() else [])
     def test_spec_has_info(self, spec_file):
@@ -72,3 +79,23 @@ class TestOpenAPIContractValidation:
                     _find_refs(item, f"{path}[{i}]")
 
         _find_refs(spec)
+
+    @pytest.mark.parametrize("spec_file", [s.name for s in _load_specs()] if CONTRACTS_DIR.exists() else [])
+    def test_paths_match_running_application(self, spec_file):
+        spec = yaml.safe_load((CONTRACTS_DIR / spec_file).read_text())
+        assert set(spec["paths"]) == set(app.openapi()["paths"])
+
+    @pytest.mark.parametrize("spec_file", [s.name for s in _load_specs()] if CONTRACTS_DIR.exists() else [])
+    def test_transaction_limits_match_running_application(self, spec_file):
+        spec = yaml.safe_load((CONTRACTS_DIR / spec_file).read_text())
+        committed = spec["components"]["schemas"]["TransactionRequest"]["properties"]
+        generated = app.openapi()["components"]["schemas"]["TransactionRequest"]["properties"]
+        for field in ("amount", "currency", "country", "category", "description"):
+            for constraint in (
+                "exclusiveMinimum",
+                "maximum",
+                "minLength",
+                "maxLength",
+                "pattern",
+            ):
+                assert committed[field].get(constraint) == generated[field].get(constraint)

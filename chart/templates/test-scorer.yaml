@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ .Release.Name }}-test-scorer"
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: test
+      image: registry.access.redhat.com/ubi9/ubi-minimal:9.6
+      command: ["sh", "-c"]
+      args:
+        - |
+          set -eu
+          base_url="http://{{ .Release.Name }}-scorer:8000"
+          curl -sf "${base_url}/ready"
+          curl -sf -X POST "${base_url}/api/v1/score" \
+            -H "Content-Type: application/json" \
+            -d '{"amount": 50, "country": "US", "category": "retail"}'
+          echo "Scorer smoke test: OK"
+  restartPolicy: Never

@@ -20,6 +20,7 @@ spec:
       containers:
         - name: scorer
           image: {{ .Values.app.image }}
+          imagePullPolicy: {{ .Values.app.imagePullPolicy }}
           ports:
             - containerPort: 8000
               protocol: TCP
@@ -30,17 +31,24 @@ spec:
             {{- end }}
             - name: MODEL_NAME
               value: {{ .Values.model.name | default "granite-2b-cpu" | quote }}
-            {{- if .Values.model.api_key }}
+            {{- if .Values.model.existingSecret }}
             - name: MODEL_API_KEY
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Release.Name }}-model-secret
-                  key: api-key
-                  optional: true
+                  name: {{ .Values.model.existingSecret | quote }}
+                  key: {{ .Values.model.apiKeySecretKey | default "api-key" | quote }}
             {{- end }}
+            - name: DEMO_MODE
+              value: {{ if .Values.model.endpoint }}"false"{{ else }}"true"{{ end }}
+            - name: RULE_WEIGHT
+              value: {{ .Values.scoring.ruleWeight | quote }}
+            - name: LLM_WEIGHT
+              value: {{ .Values.scoring.llmWeight | quote }}
+            - name: MAX_BATCH_SIZE
+              value: {{ .Values.scoring.maxBatchSize | quote }}
           readinessProbe:
             httpGet:
-              path: /health
+              path: /ready
               port: 8000
             initialDelaySeconds: 5
             periodSeconds: 10

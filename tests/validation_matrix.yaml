@@ -67,11 +67,11 @@ stages:
         points: 20
         required: true
       conditional_skip_high:
-        description: "LLM skipped when rule_score > 90 (confident high risk)"
+        description: "LLM skipped when rule_score >= 90 (confident high risk)"
         points: 15
         required: true
       conditional_skip_low:
-        description: "LLM skipped when rule_score < 10 (confident low risk)"
+        description: "LLM skipped when rule_score <= 10 (confident low risk)"
         points: 15
         required: true
       skip_rate_stats:
@@ -88,7 +88,7 @@ stages:
         points: 25
         required: true
       response_has_real_metrics:
-        description: "Response contains real model name and measured latency"
+        description: "Response identifies the active scorer and reports measured latency"
         points: 15
         required: true
       no_hardcoded_latency:
