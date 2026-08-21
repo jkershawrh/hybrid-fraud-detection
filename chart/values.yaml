@@ -9,7 +9,7 @@
 #
 # Option B: Deploy with no model (demo mode -- scorer runs with simulated LLM)
 model:
-  name: granite-2b-cpu
+  name: qwen2.5:0.5b
   # endpoint: ""
   # api_key: ""
 

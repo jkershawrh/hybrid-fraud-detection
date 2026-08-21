@@ -1,0 +1,4 @@
+target-version = "py39"
+
+[lint]
+ignore = ["BLE001", "UP006", "UP035", "UP045", "FA100"]

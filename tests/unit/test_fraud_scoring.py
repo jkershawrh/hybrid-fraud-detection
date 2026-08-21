@@ -9,9 +9,9 @@ Tests cover:
   - Batch scoring
 """
 
-import sys
 import pathlib
-from unittest.mock import MagicMock, patch
+import sys
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -20,17 +20,13 @@ SRC_DIR = pathlib.Path(__file__).resolve().parents[2] / "src"
 sys.path.insert(0, str(SRC_DIR))
 
 from scorer import (
-    RuleEngine,
-    HybridScorer,
-    DemoLLMScorer,
-    TransactionRequest,
-    ScoreResponse,
-    RULE_WEIGHT,
     LLM_WEIGHT,
+    RULE_WEIGHT,
     SKIP_HIGH_THRESHOLD,
-    SKIP_LOW_THRESHOLD,
+    HybridScorer,
+    RuleEngine,
+    TransactionRequest,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -130,13 +126,13 @@ class TestRuleEngineSignals:
 
     def test_round_amount_detected(self, rule_engine):
         tx = _make_tx(amount=5000, country="US", category="retail")
-        score, signals = rule_engine.score(tx)
+        _score, signals = rule_engine.score(tx)
         signal_names = {s.signal for s in signals}
         assert "round_amount" in signal_names
 
     def test_crypto_detected(self, rule_engine):
         tx = _make_tx(amount=500, country="US", category="crypto")
-        score, signals = rule_engine.score(tx)
+        _score, signals = rule_engine.score(tx)
         signal_names = {s.signal for s in signals}
         assert "crypto_transaction" in signal_names
         assert "high_risk_category" in signal_names
@@ -150,7 +146,7 @@ class TestRuleEngineSignals:
     def test_score_capped_at_100(self, rule_engine):
         """Even with all signals, score should not exceed 100."""
         tx = _make_tx(amount=15000, country="NG", category="crypto")
-        score, signals = rule_engine.score(tx)
+        score, _signals = rule_engine.score(tx)
         assert score <= 100.0
 
 

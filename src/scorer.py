@@ -13,12 +13,12 @@ import logging
 import os
 import random
 import time
-from dataclasses import dataclass, field
-from typing import Optional
+from dataclasses import dataclass
+from typing import List, Optional, Tuple
 
 import httpx
 from fastapi import FastAPI
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -81,7 +81,7 @@ class ScoreResponse(BaseModel):
     risk_score: float
     rule_score: float
     llm_score: Optional[float] = None
-    signals: list[Signal]
+    signals: List[Signal]
     llm_skipped: bool
     skip_reason: Optional[str] = None
     latency_ms: float
@@ -90,11 +90,11 @@ class ScoreResponse(BaseModel):
 
 
 class BatchRequest(BaseModel):
-    transactions: list[TransactionRequest]
+    transactions: List[TransactionRequest]
 
 
 class BatchResponse(BaseModel):
-    results: list[ScoreResponse]
+    results: List[ScoreResponse]
     total: int
     avg_latency_ms: float
 
@@ -122,9 +122,9 @@ class RuleEngine:
 
     BASE_SCORE = 10.0
 
-    def score(self, tx: TransactionRequest) -> tuple[float, list[Signal]]:
+    def score(self, tx: TransactionRequest) -> Tuple[float, List[Signal]]:
         """Return (rule_score, signals) for a transaction."""
-        signals: list[Signal] = []
+        signals: List[Signal] = []
         score = self.BASE_SCORE
 
         # High amount: > $10K
@@ -188,7 +188,7 @@ class LLMScorer:
         self.model = model
         self.client = httpx.Client(timeout=30.0)
 
-    def score(self, tx: TransactionRequest, signals: list[Signal]) -> tuple[float, float]:
+    def score(self, tx: TransactionRequest, signals: List[Signal]) -> Tuple[float, float]:
         """Return (llm_score, latency_ms). Raises on failure."""
         prompt = (
             "Assess the fraud risk of this transaction on a scale of 0-100. "
@@ -229,7 +229,7 @@ class DemoLLMScorer:
     def __init__(self, model: str):
         self.model = model
 
-    def score(self, tx: TransactionRequest, signals: list[Signal]) -> tuple[float, float]:
+    def score(self, tx: TransactionRequest, signals: List[Signal]) -> Tuple[float, float]:
         """Return a simulated score based on signals, with artificial latency."""
         # Simulate a plausible LLM score: correlated with rule signals but noisy
         base = len(signals) * 15.0
@@ -286,9 +286,9 @@ class HybridScorer:
         rule_score, signals = self.rule_engine.score(tx)
 
         # Step 2: Conditional LLM scoring
-        llm_score: Optional[float] = None
+        llm_score = None
         llm_skipped = False
-        skip_reason: Optional[str] = None
+        skip_reason = None
 
         if rule_score >= SKIP_HIGH_THRESHOLD:
             llm_skipped = True

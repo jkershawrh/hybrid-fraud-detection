@@ -106,7 +106,7 @@ components:
           example: "demo"
         model:
           type: string
-          example: "granite-2b-cpu"
+          example: "qwen2.5:0.5b"
 
     TransactionRequest:
       type: object
@@ -178,7 +178,7 @@ components:
           example: 142.5
         model:
           type: string
-          example: "granite-2b-cpu"
+          example: "qwen2.5:0.5b"
         ai_disclaimer:
           type: string
           example: "Rule-based signals are deterministic. LLM risk assessment is AI-generated -- verify critical decisions."
