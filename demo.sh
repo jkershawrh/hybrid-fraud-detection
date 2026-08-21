@@ -27,7 +27,7 @@ source "$VENV_DIR/bin/activate"
 pip install -q -r "$SRC_DIR/requirements.txt"
 
 # ── Ollama (optional) ───────────────────────────────────────────────
-MODEL_NAME="qwen2.5:0.5b"
+MODEL_NAME="${MODEL_NAME:-qwen2.5:0.5b}"
 USE_OLLAMA=false
 
 if command -v ollama &>/dev/null; then
@@ -61,18 +61,31 @@ fi
 
 cd "$SRC_DIR"
 python3 -m uvicorn scorer:app --host 127.0.0.1 --port 8000 &
-PIDS+=($!)
+SCORER_PID=$!
+PIDS+=("$SCORER_PID")
 
-# Wait for scorer health
+# Wait for the scorer and its selected model path to become ready
 echo -n "Waiting for scorer..."
+SCORER_READY=false
 for _ in $(seq 1 30); do
-    if curl -sf http://127.0.0.1:8000/health >/dev/null 2>&1; then
+    if curl -sf http://127.0.0.1:8000/ready >/dev/null 2>&1; then
         echo " ready."
+        SCORER_READY=true
         break
+    fi
+    if ! kill -0 "$SCORER_PID" 2>/dev/null; then
+        echo " failed."
+        echo "Scorer exited before becoming ready. Review the error above."
+        exit 1
     fi
     sleep 1
     echo -n "."
 done
+if ! $SCORER_READY; then
+    echo " timed out."
+    echo "Scorer did not become ready within 30 seconds."
+    exit 1
+fi
 
 # ── Start Gradio UI (on :7860) ───────────────────────────────────────
 export SCORER_URL="http://127.0.0.1:8000"
@@ -94,6 +107,7 @@ if $UI_RUNNING; then
     echo "  Gradio UI:   http://127.0.0.1:7860"
 fi
 echo "  Health:      http://127.0.0.1:8000/health"
+echo "  Readiness:   http://127.0.0.1:8000/ready"
 echo ""
 if $USE_OLLAMA; then
     echo "  Mode: LIVE (Ollama + $MODEL_NAME)"

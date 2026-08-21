@@ -1,6 +1,6 @@
 apiVersion: v2
 name: hybrid-fraud-detection
-description: Combine deterministic rule engines with LLM reasoning for explainable, auditable fraud detection.
+description: Educational hybrid scoring demo with visible rule signals and conditional LLM assessment.
 type: application
 version: 0.1.0
 appVersion: "1.0.0"

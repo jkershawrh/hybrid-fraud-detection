@@ -9,7 +9,7 @@ benchmark_rubric:
     verified_means: "Measured by a live endpoint in the target environment"
     public_claim_rules:
       - "Do not publish speedup claims unless claim_registry marks them verified"
-      - "If a feature is configured but unmeasured, present as 'configured and measured'"
+      - "If a feature is configured but unmeasured, present it as configured, not measured"
       - "Cost claims use 'estimate' language, never 'guaranteed'"
 
   run_modes:
@@ -62,5 +62,5 @@ benchmark_rubric:
     skip_rate_measurement:
       description: "LLM skip rate across mixed transaction distribution"
       sample_size: 1000
-      expected_range: "60-70%"
+      expected_behavior: "Report the measured rate without a preset performance claim"
       required_fields: ["llm_skip_rate_pct", "llm_calls", "llm_skips"]

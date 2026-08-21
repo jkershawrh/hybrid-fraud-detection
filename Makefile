@@ -13,7 +13,7 @@ EXTRA_HELM_ARGS ?=
 
 .PHONY: help install uninstall test-all test-contracts test-infra test-unit \
         test-integration test-benchmarks test-publication \
-        build compose-up compose-down lint
+        audit-claims build compose-up compose-down lint
 
 # ── RHDP Deploy ───────────────────────────────────────────────────────
 install: ## Deploy to OpenShift via Helm
@@ -64,6 +64,9 @@ test-benchmarks: ## Stage 4 — Performance benchmarks against rubric
 test-publication: ## Stage 5 — README and repo structure validation
 	$(PYTEST) tests/publication/ -v --tb=short
 
+audit-claims: ## List public claims that still need evidence
+	$(PYTHON) tests/audit_claims.py
+
 # ── Aggregates ────────────────────────────────────────────────────────
 test-all: ## Run all stages sequentially (gated)
 	@echo "╔══════════════════════════════════════════╗"
@@ -89,5 +92,5 @@ compose-down: ## Stop local dev stack
 	$(PODMAN) compose down -v
 
 lint: ## Lint Python, Helm, and README
-	$(PYTHON) -m ruff check src/ tests/ || true
-	$(HELM) lint chart/ || true
+	$(PYTHON) -m ruff check src/ tests/
+	$(HELM) lint chart/

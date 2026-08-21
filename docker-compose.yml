@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   ollama:
     image: ollama/ollama
@@ -8,7 +6,7 @@ services:
     volumes:
       - ollama_cache:/root/.ollama
     healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:11434/api/tags"]
+      test: ["CMD", "ollama", "list"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -32,15 +30,37 @@ services:
     environment:
       - MODEL_ENDPOINT=${MODEL_ENDPOINT:-http://ollama:11434/v1}
       - MODEL_NAME=${MODEL_NAME:-qwen2.5:0.5b}
+      - MODEL_API_KEY=${MODEL_API_KEY:-}
       - DEMO_MODE=${DEMO_MODE:-false}
+      - RULE_WEIGHT=${RULE_WEIGHT:-0.6}
+      - LLM_WEIGHT=${LLM_WEIGHT:-0.4}
+      - MAX_BATCH_SIZE=${MAX_BATCH_SIZE:-100}
     depends_on:
-      ollama:
-        condition: service_healthy
+      ollama-pull:
+        condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:8000/health"]
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://localhost:8000/ready', timeout=5)
       interval: 10s
       timeout: 5s
       retries: 5
+
+  ui:
+    profiles: ["ui"]
+    build:
+      context: ./src
+      dockerfile: Containerfile
+    command: ["python", "ui.py"]
+    ports:
+      - "7860:7860"
+    environment:
+      - SCORER_URL=http://scorer:8000
+    depends_on:
+      scorer:
+        condition: service_healthy
 
 volumes:
   ollama_cache:

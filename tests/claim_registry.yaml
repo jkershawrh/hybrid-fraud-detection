@@ -8,19 +8,6 @@
 #   - Cost claims use "contributes to" / "estimate" language, never "guaranteed"
 
 claims:
-  - id: conditional-skip-rate
-    value: "60-70% LLM skip rate"
-    file: src/scorer.py
-    line: null
-    source: "Estimated from rule engine confidence thresholds (>90 or <10)"
-    source_url: ""
-    verified: false
-    verified_date: null
-    notes: >
-      Unverified estimate. Actual skip rate depends on transaction distribution.
-      With typical financial data, rule engine produces confident scores (>90 or <10)
-      for 60-70% of transactions, avoiding LLM calls entirely.
-
   - id: weighted-combination
     value: "60% rule + 40% LLM"
     file: src/scorer.py
@@ -28,7 +15,7 @@ claims:
     source: "Verified from source code: RULE_WEIGHT=0.6, LLM_WEIGHT=0.4"
     source_url: ""
     verified: true
-    verified_date: "2025-01-15"
+    verified_date: "2026-08-20"
     notes: >
       Combination formula: combined = (rule_score * 0.6) + (llm_score * 0.4).
-      Verified in FraudScorer.java line 110 and ported to Python scorer.py.
+      The default weights are configurable through RULE_WEIGHT and LLM_WEIGHT.
