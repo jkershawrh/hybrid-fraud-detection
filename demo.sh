@@ -76,15 +76,23 @@ done
 
 # ── Start Gradio UI (on :7860) ───────────────────────────────────────
 export SCORER_URL="http://127.0.0.1:8000"
-python3 -m uvicorn ui:demo --host 127.0.0.1 --port 7860 &
-PIDS+=($!)
+UI_RUNNING=false
+if python3 -c "import gradio" 2>/dev/null; then
+    python3 ui.py &
+    PIDS+=($!)
+    UI_RUNNING=true
+else
+    echo "WARNING: Gradio requires Python 3.10+. UI skipped — API still available."
+fi
 
 echo ""
 echo "════════════════════════════════════════════════════════════"
 echo "  Hybrid Fraud Detection — running"
 echo ""
 echo "  Scorer API:  http://127.0.0.1:8000"
-echo "  Gradio UI:   http://127.0.0.1:7860"
+if $UI_RUNNING; then
+    echo "  Gradio UI:   http://127.0.0.1:7860"
+fi
 echo "  Health:      http://127.0.0.1:8000/health"
 echo ""
 if $USE_OLLAMA; then
