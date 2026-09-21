@@ -1,0 +1,81 @@
+{
+  "schema": "quickstart.redhat.com/launchpad-intake-authoring-evidence/v1",
+  "run_id": "hybrid-fraud-launchpad-intake-authoring-20260921",
+  "recorded_at": "2026-09-21T04:35:14Z",
+  "result": "GREEN-local",
+  "source_revision": "93568a3f92421657621b8dc736bc96d9d1e784c9",
+  "methods": {
+    "tdd": "green-local",
+    "edd": "green-local",
+    "cdd": "green-local",
+    "bdd": "green-local",
+    "cbt": "green-local"
+  },
+  "red": [
+    {
+      "suite": "tests/publication/test_launchpad_intake.py",
+      "expected_failures": 5,
+      "reason": "The legacy Quickstart lacked list-shaped quality contracts, Antora content, a deployed participant UI, an explicit model configuration, and a UI Route."
+    },
+    {
+      "test": "test_ci_builds_the_showroom_from_pinned_dependencies",
+      "expected_failures": 1,
+      "reason": "The Showroom build did not yet have pinned Node dependencies or a CI job."
+    }
+  ],
+  "green": {
+    "python_tests": {
+      "passed": 55,
+      "failed": 0
+    },
+    "ruff": "pass",
+    "helm_lint": "pass",
+    "helm_render": "pass",
+    "container_build": {
+      "result": "pass",
+      "local_image": "localhost/hybrid-fraud-detection:intake-test",
+      "local_image_id": "cb6fa0cab0a32dadee209e90f45ee033f243b05a9ab5035344bf3f725fab40c9"
+    },
+    "showroom_build": "pass",
+    "local_scorer_readiness": "pass",
+    "local_participant_ui": "pass",
+    "local_synthetic_score": "pass",
+    "secret_scan": "pass"
+  },
+  "intake_quality": {
+    "repository_discovery": "pass",
+    "quality_gate": "review-required",
+    "blocking_findings": [],
+    "showroom_pages": 3,
+    "hands_on_modules": 1,
+    "execute_blocks": 7,
+    "validation_stages": 7,
+    "benchmark_entries": 5
+  },
+  "safety": {
+    "synthetic_data_only": true,
+    "cluster_scoped_resources": 0,
+    "privileged_findings": 0,
+    "repository_secret_manifests": 0,
+    "secret_values_recorded": false
+  },
+  "mutations": {
+    "live_catalog": false,
+    "clusters": false,
+    "workshops": false,
+    "routes": false,
+    "credentials": false,
+    "registry": false
+  },
+  "remaining_gates": [
+    "Publish a signed, scanned, SBOM-backed immutable multi-architecture image digest to the approved registry.",
+    "Render and review the Helm workload with the selected immutable image and Launchpad runtime values.",
+    "Define the approved MaaS model, endpoint Secret mapping, participant tabs, routes, identity, and cleanup contract.",
+    "Measure steady and transient per-seat CPU, memory, pod, storage, startup, and model-load demand.",
+    "Run one-seat, five-seat, intended-scale, restart, isolation, and zero-residue reclaim certification on an eligible OpenShift cluster."
+  ],
+  "release": {
+    "eligible": false,
+    "next_gate": "Push the source candidate, rerun immutable Launchpad discovery, then complete artifact and runtime integration without activating the catalog."
+  }
+}
