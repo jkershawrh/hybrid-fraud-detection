@@ -65,3 +65,35 @@ spec:
             limits:
               cpu: "1"
               memory: 512Mi
+        {{- if .Values.ui.enabled }}
+        - name: ui
+          image: {{ .Values.app.image }}
+          imagePullPolicy: {{ .Values.app.imagePullPolicy }}
+          command: ["python", "ui.py"]
+          ports:
+            - containerPort: 7860
+              protocol: TCP
+              name: ui
+          env:
+            - name: SCORER_URL
+              value: http://127.0.0.1:8000
+          readinessProbe:
+            httpGet:
+              path: /
+              port: ui
+            initialDelaySeconds: 8
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: ui
+            initialDelaySeconds: 15
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+        {{- end }}

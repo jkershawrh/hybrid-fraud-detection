@@ -1,0 +1,190 @@
+= Build and Explain a Hybrid Decision
+:navtitle: Guided Build
+
+== What you will learn
+
+By completing this module, you will be able to:
+
+* distinguish deterministic rule evidence from AI-generated assessment;
+* explain why high-confidence cases can avoid a model call;
+* trace an ambiguous case through an OpenAI-compatible model endpoint;
+* interpret the rule, model, combined score, latency, and skip statistics; and
+* identify what must change before the pattern can support a real decision.
+
+== See: confirm your isolated environment
+
+Launchpad has already authenticated the terminal and selected the namespace
+assigned to your seat. Confirm that identity and scope before touching the
+workload.
+
+[source,sh,role="execute",subs=attributes+]
+----
+oc whoami
+oc project -q
+test "$(oc project -q)" = "{project_name}"
+oc auth can-i get pods -n "{project_name}"
+oc auth can-i get nodes
+----
+
+The namespace check and pod permission must succeed. The final command must
+return `no` or `Warning ... no`; that is expected evidence that your lab
+identity is not a cluster-wide administrator.
+
+== See: inspect the application components
+
+The scorer and participant UI run together so that the UI can call the API on
+the pod-local network without exposing credentials to the browser. OpenShift
+Services and Routes expose only the declared interfaces.
+
+[source,sh,role="execute",subs=attributes+]
+----
+oc get deployment,pod,service,route -n "{project_name}" \
+  -l app.kubernetes.io/name=hybrid-fraud-detection
+oc get pods -n "{project_name}" \
+  -l app.kubernetes.io/name=hybrid-fraud-detection \
+  -o custom-columns=NAME:.metadata.name,READY:.status.containerStatuses[*].ready
+----
+
+The application pod should report two ready containers: `scorer` and `ui`.
+The UI is the business-facing experience; the scorer route remains available
+for health checks and the guided API exercises below.
+
+== See: establish the API endpoint
+
+Resolve the scorer Route from the workload label instead of copying a hostname
+from another seat.
+
+[source,sh,role="execute",subs=attributes+]
+----
+SCORER_HOST="$(oc get route -n "{project_name}" \
+  -l app.kubernetes.io/name=hybrid-fraud-detection \
+  -o custom-columns=NAME:.metadata.name,HOST:.spec.host --no-headers \
+  | awk '$1 ~ /-scorer$/ {print $2; exit}')"
+SCORER_ROUTE="https://$SCORER_HOST"
+test -n "$SCORER_HOST"
+curl -ksS "$SCORER_ROUTE/ready" | python3 -m json.tool
+----
+
+The readiness response identifies whether the seat uses the approved live
+model endpoint or the clearly labeled simulator. A production claim must never
+confuse simulated output with live model evidence.
+
+== See: score an obvious low-risk example
+
+The first synthetic transaction intentionally produces a low deterministic
+score. The policy can return immediately without using model capacity.
+
+[source,sh,role="execute",subs=attributes+]
+----
+curl -ksS -X POST "$SCORER_ROUTE/api/v1/score" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "amount": 50,
+    "currency": "USD",
+    "country": "US",
+    "category": "retail",
+    "description": "Synthetic coffee purchase"
+  }' | tee /tmp/rule-only.json | python3 -m json.tool
+----
+
+Look for `"llm_skipped": true`. The response still includes the rule score,
+final risk level, measured request latency, skip reason, and AI disclaimer.
+This is the control-flow decision the pattern is designed to make visible.
+
+== See: score an ambiguous example
+
+The next fictional case produces evidence that is not at a configured extreme.
+In live mode, the scorer asks the selected model for a bounded JSON score and
+combines it with the deterministic score. In demo mode, it uses the labeled
+simulator so the same interface remains teachable without claiming live AI.
+
+[source,sh,role="execute",subs=attributes+]
+----
+curl -ksS -X POST "$SCORER_ROUTE/api/v1/score" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "amount": 5000,
+    "currency": "USD",
+    "country": "US",
+    "category": "wire_transfer",
+    "description": "Synthetic supplier payment with changed banking details"
+  }' | tee /tmp/hybrid.json | python3 -m json.tool
+----
+
+Compare `rule_score`, `llm_score`, `risk_score`, `model`, and `latency_ms`.
+When a live model is configured, the default final score is 60 percent rule
+evidence plus 40 percent model assessment. Those example weights are visible,
+configurable, and require representative evaluation before adaptation.
+
+== See: inspect cumulative usage
+
+Statistics make the inference decision observable instead of hiding it behind
+the final label.
+
+[source,sh,role="execute",subs=attributes+]
+----
+curl -ksS "$SCORER_ROUTE/api/v1/stats" \
+  | tee /tmp/fraud-stats.json \
+  | python3 -m json.tool
+----
+
+The totals should now include both requests, at least one model skip, and the
+current execution mode. The skip percentage is measured from this running
+process; it is not a universal cost or performance claim.
+
+== See: use the participant workspace
+
+Open the *Fraud Scoring Workspace* tab. Submit the same two fictional examples
+and compare the risk badge, signal list, scorer identity, and measured latency.
+The Batch Analysis tab demonstrates the same contract for multiple synthetic
+records, while Statistics shows the cumulative decision mix.
+
+The participant interface is deliberately an explanation surface. It does not
+approve, block, or report a real transaction.
+
+== Verify
+
+Run these structural checks against the two saved responses.
+
+[source,sh,role="execute"]
+----
+python3 - <<'PY'
+import json
+
+rule_only = json.load(open("/tmp/rule-only.json", encoding="utf-8"))
+hybrid = json.load(open("/tmp/hybrid.json", encoding="utf-8"))
+
+assert rule_only["llm_skipped"] is True
+assert rule_only["llm_score"] is None
+assert "ai_disclaimer" in rule_only
+assert hybrid["risk_score"] >= 0
+assert hybrid["risk_score"] <= 100
+assert hybrid["model"]
+assert hybrid["latency_ms"] >= 0
+print("Hybrid scoring contract: PASS")
+PY
+----
+
+The command validates stable response structure rather than exact model prose
+or a predetermined risk decision.
+
+== Apply the pattern responsibly
+
+Before adapting this quickstart, a solution team must replace the illustrative
+signals, evaluate outcomes using representative labeled data, document model
+and rule provenance, test for harmful disparities, define human review and
+appeal paths, protect input data, monitor drift, and obtain the necessary risk,
+legal, privacy, security, and compliance approvals.
+
+The architecture is useful because it makes those decision boundaries
+observable. It is not evidence that the sample rules or model are fit for use.
+
+== Key takeaway
+
+A rule-first, AI-second workflow can reserve model capacity for ambiguous cases
+while preserving a visible explanation of what ran. Its business value comes
+from measurable control and review—not from treating an educational risk score
+as an automated decision.
+
+[.next-nav]
+xref:conclusion.adoc[Review the solution ->]

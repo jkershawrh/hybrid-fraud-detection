@@ -11,8 +11,8 @@
 # Option B: Deploy with no model (demo mode -- scorer runs with simulated LLM)
 model:
   name: qwen2.5:0.5b
-  # endpoint: ""
-  # existingSecret: ""
+  endpoint: ""
+  existingSecret: ""
   apiKeySecretKey: api-key
 
 scoring:
@@ -25,3 +25,6 @@ app:
   replicas: 1
   image: quay.io/redhat-gpte/hybrid-fraud-detection:latest
   imagePullPolicy: IfNotPresent
+
+ui:
+  enabled: true

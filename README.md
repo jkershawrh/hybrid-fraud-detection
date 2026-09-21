@@ -8,7 +8,7 @@ Learn a rule-first, AI-second scoring pattern that combines transparent example 
 - [Who is this for](#who-is-this-for)
 - [Example use cases](#example-use-cases)
 - [Detailed description](#detailed-description)
-  - [Architecture diagrams](#architecture-diagrams)
+  - [Architecture](#architecture)
 - [See it in action](#see-it-in-action)
 - [What this teaches](#what-this-teaches)
 - [What this is not](#what-this-is-not)
@@ -53,7 +53,7 @@ A conditional pipeline then decides whether model review is needed. When the exa
 
 The included model path runs on standard CPU hardware without a GPU. The actual share of requests that skip the model, and any resulting resource savings, depend on the rules and data used in an adaptation.
 
-### Architecture diagrams
+## Architecture
 
 ```mermaid
 flowchart LR
@@ -177,7 +177,7 @@ This quickstart can be deployed by a regular user with namespace-level permissio
 The launcher creates a virtual environment, uses Ollama when it is already available, and otherwise starts the clearly labeled simulator. Press Ctrl+C to stop both services.
 
 ```bash
-git clone https://github.com/rh-ai-quickstart/hybrid-fraud-detection.git
+git clone https://github.com/jkershawrh/hybrid-fraud-detection.git
 cd hybrid-fraud-detection
 ./demo.sh
 # Open http://localhost:7860
@@ -188,7 +188,7 @@ cd hybrid-fraud-detection
 1. Clone the repository if you have not already:
 
 ```bash
-git clone https://github.com/rh-ai-quickstart/hybrid-fraud-detection.git
+git clone https://github.com/jkershawrh/hybrid-fraud-detection.git
 cd hybrid-fraud-detection
 ```
 
@@ -260,8 +260,9 @@ SCORER_URL=http://localhost:8000 python src/ui.py
 # Check pod status
 oc get pods
 
-# Get the application URL
-echo "https://$(oc get route hybrid-fraud-detection-scorer -o jsonpath='{.spec.host}')"
+# Get the participant UI and scorer URLs
+echo "UI: https://$(oc get route hybrid-fraud-detection-ui -o jsonpath='{.spec.host}')"
+echo "API: https://$(oc get route hybrid-fraud-detection-scorer -o jsonpath='{.spec.host}')"
 
 # Run Helm test
 helm test hybrid-fraud-detection
@@ -298,6 +299,7 @@ oc delete project hybrid-fraud-detection
 │       ├── deployment.yaml
 │       ├── service.yaml
 │       ├── route.yaml
+│       ├── route-ui.yaml
 │       └── test-scorer.yaml
 ├── contracts/                # API contracts (OpenAPI)
 │   └── openapi/
@@ -306,6 +308,10 @@ oc delete project hybrid-fraud-detection
 │   └── images/
 │       ├── architecture.png  # Architecture diagram
 │       └── screenshot.png    # UI screenshot
+├── showroom/                 # Antora participant journey
+│   ├── antora.yml
+│   └── modules/ROOT/
+├── site.yml                  # Showroom Antora playbook
 ├── src/                      # Application source code
 │   ├── scorer.py             # FastAPI app: rule engine + LLM + hybrid scorer
 │   ├── ui.py                 # Gradio UI: scoring interface

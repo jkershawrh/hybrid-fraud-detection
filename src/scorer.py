@@ -48,16 +48,29 @@ AI_DISCLAIMER = (
 # Illustrative teaching data only. Replace this set with sourced, versioned,
 # domain-specific policy data before adapting the quickstart to a real system.
 HIGH_RISK_COUNTRIES = {
-    "NG", "RU", "KP", "IR", "SY", "MM", "VE", "AF", "IQ", "LY",
+    "NG",
+    "RU",
+    "KP",
+    "IR",
+    "SY",
+    "MM",
+    "VE",
+    "AF",
+    "IQ",
+    "LY",
 }
 
 HIGH_RISK_CATEGORIES = {
-    "wire_transfer", "crypto", "gambling", "money_order", "prepaid_card",
+    "wire_transfer",
+    "crypto",
+    "gambling",
+    "money_order",
+    "prepaid_card",
 }
 
 # Confidence thresholds for conditional LLM skip
 SKIP_HIGH_THRESHOLD = 90  # rule_score at or above this -> skip LLM
-SKIP_LOW_THRESHOLD = 10   # rule_score at or below this -> skip LLM
+SKIP_LOW_THRESHOLD = 10  # rule_score at or below this -> skip LLM
 
 # Combination weights. These are intentionally configurable so learners can
 # experiment with the hybrid scoring behavior described in the README.
@@ -152,47 +165,57 @@ class RuleEngine:
 
         # Illustrative high-amount signal (not a regulatory reporting rule)
         if tx.amount > 10_000:
-            signals.append(Signal(
-                signal="high_amount",
-                weight=30,
-                detail=f"${tx.amount:,.0f} exceeds the example $10K threshold",
-            ))
+            signals.append(
+                Signal(
+                    signal="high_amount",
+                    weight=30,
+                    detail=f"${tx.amount:,.0f} exceeds the example $10K threshold",
+                )
+            )
             score += 30
 
         # Match the quickstart's illustrative country list
         if tx.country.upper() in HIGH_RISK_COUNTRIES:
-            signals.append(Signal(
-                signal="high_risk_country",
-                weight=25,
-                detail=f"{tx.country.upper()} matched the example country list",
-            ))
+            signals.append(
+                Signal(
+                    signal="high_risk_country",
+                    weight=25,
+                    detail=f"{tx.country.upper()} matched the example country list",
+                )
+            )
             score += 25
 
         # Match the quickstart's illustrative category list
         if tx.category.lower() in HIGH_RISK_CATEGORIES:
-            signals.append(Signal(
-                signal="high_risk_category",
-                weight=15,
-                detail=f"{tx.category} matched the example category list",
-            ))
+            signals.append(
+                Signal(
+                    signal="high_risk_category",
+                    weight=15,
+                    detail=f"{tx.category} matched the example category list",
+                )
+            )
             score += 15
 
         # Illustrative round-amount signal
         if tx.amount > 0 and tx.amount % 1000 == 0:
-            signals.append(Signal(
-                signal="round_amount",
-                weight=5,
-                detail="Exact round number matched the example rule",
-            ))
+            signals.append(
+                Signal(
+                    signal="round_amount",
+                    weight=5,
+                    detail="Exact round number matched the example rule",
+                )
+            )
             score += 5
 
         # Crypto transaction
         if tx.category.lower() == "crypto":
-            signals.append(Signal(
-                signal="crypto_transaction",
-                weight=10,
-                detail="Cryptocurrency transaction detected",
-            ))
+            signals.append(
+                Signal(
+                    signal="crypto_transaction",
+                    weight=10,
+                    detail="Cryptocurrency transaction detected",
+                )
+            )
             score += 10
 
         return min(score, 100.0), signals
@@ -219,7 +242,9 @@ class LLMScorer:
         response = self.client.get(f"{self.endpoint}/v1/models", timeout=5.0)
         response.raise_for_status()
 
-    def score(self, tx: TransactionRequest, signals: List[Signal]) -> Tuple[float, float]:
+    def score(
+        self, tx: TransactionRequest, signals: List[Signal]
+    ) -> Tuple[float, float]:
         """Return (llm_score, latency_ms). Raises on failure."""
         transaction_data = {
             "amount": tx.amount,
@@ -279,7 +304,9 @@ class DemoLLMScorer:
     def healthcheck(self) -> None:
         """Demo mode has no external dependency."""
 
-    def score(self, tx: TransactionRequest, signals: List[Signal]) -> Tuple[float, float]:
+    def score(
+        self, tx: TransactionRequest, signals: List[Signal]
+    ) -> Tuple[float, float]:
         """Return a simulated score based on signals."""
         # Simulate a plausible LLM score: correlated with rule signals but noisy
         base = len(signals) * 15.0
@@ -296,6 +323,7 @@ class DemoLLMScorer:
 @dataclass
 class ScoringStats:
     """Tracks cumulative scoring statistics."""
+
     total_scored: int = 0
     total_latency_ms: float = 0.0
     llm_calls: int = 0
@@ -458,7 +486,9 @@ def ready():
         llm_scorer.healthcheck()
     except httpx.HTTPError as exc:
         logger.warning("Readiness check failed: %s", exc)
-        raise HTTPException(status_code=503, detail="Model endpoint unavailable") from exc
+        raise HTTPException(
+            status_code=503, detail="Model endpoint unavailable"
+        ) from exc
     return {
         "status": "ready",
         "mode": _active_mode,
@@ -499,4 +529,5 @@ def get_stats():
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)

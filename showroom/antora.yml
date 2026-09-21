@@ -1,0 +1,15 @@
+name: fraud-detection
+version: main
+title: Hybrid Fraud Detection on Intel Xeon
+start_page: index.adoc
+nav:
+  - modules/ROOT/nav.adoc
+
+asciidoc:
+  attributes:
+    user: '%user%'
+    guid: '%guid%'
+    project_name: '%namespace%'
+    cluster_display_name: '%cluster_display_name%'
+    openshift_console_url: '%openshift_console_url%'
+    maas_model: '%maas_model%'

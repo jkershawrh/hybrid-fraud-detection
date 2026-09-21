@@ -1,4 +1,5 @@
 """Stage 5: Publication validation — README meets all BLOCKER requirements."""
+
 import pathlib
 import re
 
@@ -12,7 +13,7 @@ REQUIRED_SECTIONS = [
     "Table of Contents",
     "Overview",
     "Detailed description",
-    "Architecture diagrams",
+    "Architecture",
     "Requirements",
     "Minimum hardware requirements",
     "Minimum software requirements",
@@ -58,7 +59,6 @@ def readme_lines(readme_text):
 
 
 class TestTitleAndDescription:
-
     def test_h1_exists(self, readme_lines):
         h1_lines = [line for line in readme_lines if line.startswith("# ")]
         assert len(h1_lines) >= 1, "No H1 heading found"
@@ -73,13 +73,48 @@ class TestTitleAndDescription:
         title = h1.lstrip("# ").strip()
         first_word = title.split()[0] if title.split() else ""
         action_verbs = [
-            "Deploy", "Build", "Accelerate", "Route", "Detect", "Encrypt",
-            "Govern", "Scale", "Optimize", "Orchestrate", "Automate",
-            "Monitor", "Secure", "Analyze", "Create", "Run", "Serve",
-            "Stream", "Transform", "Classify", "Boost", "Catch", "Certify",
-            "Coordinate", "Cut", "Enforce", "Ensure", "Find", "Get", "Go",
-            "Handle", "Know", "Let", "Make", "Prevent", "Protect", "Prove",
-            "Reduce", "Resolve", "Solve", "Stop", "Surface",
+            "Deploy",
+            "Build",
+            "Accelerate",
+            "Route",
+            "Detect",
+            "Encrypt",
+            "Govern",
+            "Scale",
+            "Optimize",
+            "Orchestrate",
+            "Automate",
+            "Monitor",
+            "Secure",
+            "Analyze",
+            "Create",
+            "Run",
+            "Serve",
+            "Stream",
+            "Transform",
+            "Classify",
+            "Boost",
+            "Catch",
+            "Certify",
+            "Coordinate",
+            "Cut",
+            "Enforce",
+            "Ensure",
+            "Find",
+            "Get",
+            "Go",
+            "Handle",
+            "Know",
+            "Let",
+            "Make",
+            "Prevent",
+            "Protect",
+            "Prove",
+            "Reduce",
+            "Resolve",
+            "Solve",
+            "Stop",
+            "Surface",
         ]
         assert first_word in action_verbs, (
             f"H1 title should start with an action verb, got '{first_word}'"
@@ -88,7 +123,7 @@ class TestTitleAndDescription:
     def test_short_description_exists(self, readme_lines):
         h1_idx = next(i for i, line in enumerate(readme_lines) if line.startswith("# "))
         desc_lines = []
-        for line in readme_lines[h1_idx + 1:]:
+        for line in readme_lines[h1_idx + 1 :]:
             if line.startswith(("#", "## ")):
                 break
             if line.strip():
@@ -98,7 +133,7 @@ class TestTitleAndDescription:
     def test_short_description_under_160_chars(self, readme_lines):
         h1_idx = next(i for i, line in enumerate(readme_lines) if line.startswith("# "))
         desc_lines = []
-        for line in readme_lines[h1_idx + 1:]:
+        for line in readme_lines[h1_idx + 1 :]:
             if line.startswith("#"):
                 break
             if line.strip():
@@ -109,14 +144,13 @@ class TestTitleAndDescription:
 
 
 class TestRequiredSections:
-
     def test_sections_present(self, readme_text):
         headings = re.findall(r"^#{1,4}\s+(.+)$", readme_text, re.MULTILINE)
         heading_text = [h.strip() for h in headings]
         for section in REQUIRED_SECTIONS:
-            assert any(
-                section.lower() in h.lower() for h in heading_text
-            ), f"Missing required section: '{section}'"
+            assert any(section.lower() in h.lower() for h in heading_text), (
+                f"Missing required section: '{section}'"
+            )
 
     def test_architecture_diagram_exists(self):
         assert DOCS_IMAGES.exists(), "docs/images/ directory not found"
@@ -133,14 +167,15 @@ class TestRequiredSections:
 
 
 class TestTags:
-
     def test_tags_section_exists(self, readme_text):
         assert re.search(r"^##\s+Tags", readme_text, re.MULTILINE), (
             "Missing ## Tags section"
         )
 
     def test_required_tag_keys(self, readme_text):
-        tags_match = re.search(r"^##\s+Tags\s*\n(.*?)(?=^##|\Z)", readme_text, re.MULTILINE | re.DOTALL)
+        tags_match = re.search(
+            r"^##\s+Tags\s*\n(.*?)(?=^##|\Z)", readme_text, re.MULTILINE | re.DOTALL
+        )
         assert tags_match, "Cannot find Tags section content"
         tags_content = tags_match.group(1)
         for key in REQUIRED_TAG_KEYS:
@@ -149,7 +184,9 @@ class TestTags:
             )
 
     def test_tag_format_bold_key(self, readme_text):
-        tags_match = re.search(r"^##\s+Tags\s*\n(.*?)(?=^##|\Z)", readme_text, re.MULTILINE | re.DOTALL)
+        tags_match = re.search(
+            r"^##\s+Tags\s*\n(.*?)(?=^##|\Z)", readme_text, re.MULTILINE | re.DOTALL
+        )
         if not tags_match:
             pytest.skip("No Tags section")
         tag_lines = [
@@ -163,7 +200,9 @@ class TestTags:
             )
 
     def test_industry_tag_valid(self, readme_text):
-        tags_match = re.search(r"^##\s+Tags\s*\n(.*?)(?=^##|\Z)", readme_text, re.MULTILINE | re.DOTALL)
+        tags_match = re.search(
+            r"^##\s+Tags\s*\n(.*?)(?=^##|\Z)", readme_text, re.MULTILINE | re.DOTALL
+        )
         if not tags_match:
             pytest.skip("No Tags section")
         industry_match = re.search(r"\*\*Industry:\*\*\s+(.+)", tags_match.group(1))
@@ -175,18 +214,22 @@ class TestTags:
 
 
 class TestNoSecrets:
-
     def test_no_api_keys_in_source(self):
         patterns = [
             r'api_key\s*[:=]\s*["\x27][A-Za-z0-9]',
             r'password\s*[:=]\s*["\x27][A-Za-z0-9]',
             r'secret\s*[:=]\s*["\x27][A-Za-z0-9]',
-            r'sk-[A-Za-z0-9]{20,}',
+            r"sk-[A-Za-z0-9]{20,}",
         ]
         violations = []
         for ext in ("*.py", "*.yaml", "*.yml", "*.json"):
             for f in ROOT.rglob(ext):
-                if ".git" in f.parts or "node_modules" in f.parts or ".venv" in f.parts or "venv" in f.parts:
+                if (
+                    ".git" in f.parts
+                    or "node_modules" in f.parts
+                    or ".venv" in f.parts
+                    or "venv" in f.parts
+                ):
                     continue
                 text = f.read_text(errors="ignore")
                 for pat in patterns:
@@ -197,7 +240,6 @@ class TestNoSecrets:
 
 
 class TestLinks:
-
     def test_no_broken_internal_links(self, readme_text):
         internal_links = re.findall(r"\[.*?\]\((?!http)(.*?)\)", readme_text)
         for link in internal_links:

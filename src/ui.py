@@ -60,16 +60,21 @@ def _risk_badge(level: str) -> str:
     )
 
 
-def score_transaction(amount: float, country: str, category: str, description: str) -> str:
+def score_transaction(
+    amount: float, country: str, category: str, description: str
+) -> str:
     """Score a single transaction and format the result as HTML."""
     try:
-        result = _post("/api/v1/score", {
-            "amount": amount,
-            "currency": "USD",
-            "country": country,
-            "category": category,
-            "description": description,
-        })
+        result = _post(
+            "/api/v1/score",
+            {
+                "amount": amount,
+                "currency": "USD",
+                "country": country,
+                "category": category,
+                "description": description,
+            },
+        )
     except Exception as e:
         return f"<p style='color:red;'>Error contacting scorer: {e}</p>"
 
@@ -91,22 +96,22 @@ def score_transaction(amount: float, country: str, category: str, description: s
 
     return f"""
     <div style="font-family:sans-serif;">
-      <p>Risk Level: {_risk_badge(result['risk_level'])}</p>
+      <p>Risk Level: {_risk_badge(result["risk_level"])}</p>
       <table style="border-collapse:collapse;margin:8px 0;">
         <tr><td style="padding:4px 12px;"><b>Final Score</b></td>
-            <td style="padding:4px 12px;">{result['risk_score']:.1f}</td></tr>
+            <td style="padding:4px 12px;">{result["risk_score"]:.1f}</td></tr>
         <tr><td style="padding:4px 12px;"><b>Rule Score</b></td>
-            <td style="padding:4px 12px;">{result['rule_score']:.1f}</td></tr>
+            <td style="padding:4px 12px;">{result["rule_score"]:.1f}</td></tr>
         <tr><td style="padding:4px 12px;"><b>LLM Score</b></td>
             <td style="padding:4px 12px;">{llm_display}</td></tr>
         <tr><td style="padding:4px 12px;"><b>Latency</b></td>
-            <td style="padding:4px 12px;">{result['latency_ms']:.1f} ms</td></tr>
+            <td style="padding:4px 12px;">{result["latency_ms"]:.1f} ms</td></tr>
         <tr><td style="padding:4px 12px;"><b>Scorer</b></td>
-            <td style="padding:4px 12px;">{result['model']}</td></tr>
+            <td style="padding:4px 12px;">{result["model"]}</td></tr>
       </table>
       {skip_info}
       <p><b>Detected Signals:</b></p>
-      <ul>{signals_html if signals_html else '<li>None</li>'}</ul>
+      <ul>{signals_html if signals_html else "<li>None</li>"}</ul>
     </div>
     """
 
@@ -130,11 +135,13 @@ def score_batch(json_text: str) -> str:
     for i, r in enumerate(result.get("results", [])):
         llm = f"{r['llm_score']:.1f}" if r.get("llm_score") is not None else "skipped"
         rows.append(
-            f"| {i+1} | {r['risk_level']} | {r['risk_score']:.1f} "
+            f"| {i + 1} | {r['risk_level']} | {r['risk_score']:.1f} "
             f"| {r['rule_score']:.1f} | {llm} | {r['latency_ms']:.1f} ms |"
         )
 
-    header = "| # | Risk Level | Final | Rule | LLM | Latency |\n|---|---|---|---|---|---|"
+    header = (
+        "| # | Risk Level | Final | Rule | LLM | Latency |\n|---|---|---|---|---|---|"
+    )
     table = header + "\n" + "\n".join(rows)
     summary = f"\n\n**Total:** {result['total']} | **Avg Latency:** {result['avg_latency_ms']:.1f} ms"
     return table + summary
@@ -162,11 +169,29 @@ def get_stats() -> str:
 # Gradio Blocks interface
 # ---------------------------------------------------------------------------
 
-EXAMPLE_BATCH = json.dumps([
-    {"amount": 15000, "country": "NG", "category": "wire_transfer", "description": "Overseas payment"},
-    {"amount": 50, "country": "US", "category": "retail", "description": "Coffee shop"},
-    {"amount": 9999, "country": "KY", "category": "crypto", "description": "BTC purchase"},
-], indent=2)
+EXAMPLE_BATCH = json.dumps(
+    [
+        {
+            "amount": 15000,
+            "country": "NG",
+            "category": "wire_transfer",
+            "description": "Overseas payment",
+        },
+        {
+            "amount": 50,
+            "country": "US",
+            "category": "retail",
+            "description": "Coffee shop",
+        },
+        {
+            "amount": 9999,
+            "country": "KY",
+            "category": "crypto",
+            "description": "BTC purchase",
+        },
+    ],
+    indent=2,
+)
 
 with gr.Blocks(title="Hybrid Fraud Detection") as demo:
     gr.Markdown("# Fraud Detection Dashboard")

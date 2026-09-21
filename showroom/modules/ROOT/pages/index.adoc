@@ -1,0 +1,55 @@
+= Hybrid Fraud Detection on Intel Xeon
+:navtitle: Welcome
+
+== The business problem
+
+Risk teams need fast, explainable screening without paying the inference cost
+of sending every obvious case to a language model. In this guided build, you
+will examine a rule-first, AI-second pattern that keeps deterministic evidence
+visible and calls a model only for ambiguous synthetic transactions.
+
+This is an educational architecture exercise. The included rules, data, and
+scores are examples and are not a trained fraud model, a regulatory control,
+or advice for real financial decisions.
+
+== What you will build and explain
+
+You will:
+
+* inspect the scorer and participant UI running in your OpenShift namespace;
+* compare a transaction that skips model inference with one that requires it;
+* trace the rule signals, model contribution, and final weighted result;
+* observe measured latency and cumulative model-call statistics; and
+* identify the controls required before adapting the pattern to a real domain.
+
+== Architecture
+
+[cols="1,3",options="header"]
+|===
+| Component | Purpose
+
+| Participant UI
+| Collects synthetic transaction fields and displays the explanation, measured
+latency, and active scorer.
+
+| FastAPI scorer
+| Applies deterministic signals, decides whether model review is needed, calls
+an OpenAI-compatible endpoint when required, and returns a structured result.
+
+| Launchpad MaaS
+| Supplies the approved model endpoint and short-lived lab credential when the
+catalog is configured for live inference.
+
+| OpenShift
+| Isolates the participant workload, routes, identity, and runtime Secret in
+one namespace on Intel Xeon infrastructure.
+|===
+
+== Safety boundary
+
+Use only the provided fictional examples or your own synthetic data. Do not
+enter customer, payment-card, personal, regulated, confidential, or
+export-controlled information.
+
+[.next-nav]
+xref:01-hybrid-scoring.adoc[Start the guided build ->]

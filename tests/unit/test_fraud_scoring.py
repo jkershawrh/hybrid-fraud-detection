@@ -20,7 +20,7 @@ import pytest
 SRC_DIR = pathlib.Path(__file__).resolve().parents[2] / "src"
 sys.path.insert(0, str(SRC_DIR))
 
-from scorer import (  # noqa: E402
+from scorer import (
     LLM_WEIGHT,
     RULE_WEIGHT,
     SKIP_HIGH_THRESHOLD,
@@ -59,7 +59,12 @@ def hybrid_scorer(rule_engine, mock_llm_scorer):
 
 
 def _make_tx(**kwargs) -> TransactionRequest:
-    defaults = {"amount": 100.0, "currency": "USD", "country": "US", "category": "retail"}
+    defaults = {
+        "amount": 100.0,
+        "currency": "USD",
+        "country": "US",
+        "category": "retail",
+    }
     defaults.update(kwargs)
     return TransactionRequest(**defaults)
 
@@ -70,8 +75,9 @@ def _make_tx(**kwargs) -> TransactionRequest:
 
 
 class TestHighRiskTransaction:
-
-    def test_high_risk_transaction_scores_above_70(self, hybrid_scorer, mock_llm_scorer):
+    def test_high_risk_transaction_scores_above_70(
+        self, hybrid_scorer, mock_llm_scorer
+    ):
         """$15K to Nigeria via wire_transfer should produce high combined score."""
         # LLM returns high score too
         mock_llm_scorer.score.return_value = (75.0, 100.0)
@@ -92,7 +98,6 @@ class TestHighRiskTransaction:
 
 
 class TestLowRiskTransaction:
-
     def test_low_risk_transaction_scores_below_30(self, hybrid_scorer, mock_llm_scorer):
         """$50 domestic retail purchase should produce low combined score."""
         # LLM returns low score
@@ -114,7 +119,6 @@ class TestLowRiskTransaction:
 
 
 class TestRuleEngineSignals:
-
     def test_rule_engine_signals_detected(self, rule_engine):
         """Verify signals list includes high_amount, high_risk_country, etc."""
         tx = _make_tx(amount=15000, country="NG", category="wire_transfer")
@@ -159,7 +163,6 @@ class TestRuleEngineSignals:
 
 
 class TestLLMScoring:
-
     def test_llm_reasoning_produces_score(self, hybrid_scorer, mock_llm_scorer):
         """Mock LLM should produce a 0-100 score in the result."""
         mock_llm_scorer.score.return_value = (65.0, 120.0)
@@ -194,7 +197,9 @@ class TestLLMScoring:
                 json={"choices": [{"message": {"content": '{"score": 72}'}}]},
             )
 
-        scorer = LLMScorer(endpoint="https://models.example.test/v1", model="example-model")
+        scorer = LLMScorer(
+            endpoint="https://models.example.test/v1", model="example-model"
+        )
         scorer.client.close()
         scorer.client = httpx.Client(transport=httpx.MockTransport(handler))
         try:
@@ -210,7 +215,9 @@ class TestLLMScoring:
                 json={"choices": [{"message": {"content": "75/100"}}]},
             )
 
-        scorer = LLMScorer(endpoint="https://models.example.test", model="example-model")
+        scorer = LLMScorer(
+            endpoint="https://models.example.test", model="example-model"
+        )
         scorer.client.close()
         scorer.client = httpx.Client(transport=httpx.MockTransport(handler))
         try:
@@ -252,7 +259,6 @@ class TestLLMScoring:
 
 
 class TestWeightedCombination:
-
     def test_weighted_combination_60_40(self, rule_engine):
         """Verify the math: combined = 0.6 * rule + 0.4 * llm."""
         mock_llm = MagicMock()
@@ -285,7 +291,6 @@ class TestWeightedCombination:
 
 
 class TestConditionalSkipHigh:
-
     def test_conditional_skip_confident_high(self, hybrid_scorer, mock_llm_scorer):
         """rule_score >= 90 should skip LLM entirely."""
         # Transaction that triggers many signals: 10 + 30 + 25 + 15 + 10 + 5 = 95
@@ -295,7 +300,10 @@ class TestConditionalSkipHigh:
         assert result.llm_skipped is True
         assert result.llm_score is None
         assert result.skip_reason is not None
-        assert "confident" in result.skip_reason.lower() or str(SKIP_HIGH_THRESHOLD) in result.skip_reason
+        assert (
+            "confident" in result.skip_reason.lower()
+            or str(SKIP_HIGH_THRESHOLD) in result.skip_reason
+        )
         mock_llm_scorer.score.assert_not_called()
 
 
@@ -305,7 +313,6 @@ class TestConditionalSkipHigh:
 
 
 class TestConditionalSkipLow:
-
     def test_conditional_skip_confident_low(self, rule_engine):
         """rule_score <= 10 should skip LLM entirely."""
         mock_llm = MagicMock()
@@ -334,7 +341,6 @@ class TestConditionalSkipLow:
 
 
 class TestAmbiguousCallsLLM:
-
     def test_ambiguous_calls_llm(self, hybrid_scorer, mock_llm_scorer):
         """rule_score between 30-70 should call LLM."""
         mock_llm_scorer.score.return_value = (45.0, 80.0)
@@ -355,7 +361,6 @@ class TestAmbiguousCallsLLM:
 
 
 class TestSkipRateStats:
-
     def test_skip_rate_in_stats(self, rule_engine):
         """Verify skip rate is reported correctly after mixed transactions."""
         mock_llm = MagicMock()
@@ -392,7 +397,6 @@ class TestSkipRateStats:
 
 
 class TestBatchScoring:
-
     def test_batch_scoring(self, hybrid_scorer, mock_llm_scorer):
         """Batch endpoint should score multiple transactions."""
         mock_llm_scorer.score.return_value = (40.0, 80.0)

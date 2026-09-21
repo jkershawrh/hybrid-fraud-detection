@@ -70,6 +70,18 @@ jobs:
       - run: pip install pytest
       - run: make test-publication
 
+  showroom-build:
+    name: Showroom Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci
+      - run: npm run build:showroom
+
   container-build:
     name: Container Build
     runs-on: ubuntu-latest
