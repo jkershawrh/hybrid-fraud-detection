@@ -19,6 +19,29 @@ def test_base_and_smoke_images_are_immutable() -> None:
     assert IMMUTABLE_IMAGE.fullmatch(base_image)
 
 
+def test_candidate_publisher_is_manual_scoped_and_signed() -> None:
+    workflow = (ROOT / ".github/workflows/ci.yaml").read_text()
+    document = yaml.safe_load(workflow)
+    triggers = document.get("on", document.get(True))
+    assert triggers["workflow_dispatch"]["inputs"]["publish_candidate"]["default"] is False
+    job = document["jobs"]["publish_candidate"]
+    assert job["environment"] == "intake-candidate-publish"
+    assert "inputs.publish_candidate == true" in job["if"]
+    assert "refs/heads/codex/hybrid-fraud-immutable-images" in job["if"]
+    assert set(job["needs"]) == set(document["jobs"]) - {"publish_candidate"}
+    assert job["permissions"] == {"contents": "read", "id-token": "write"}
+    assert "secrets.QUAY_ROBOT_USERNAME" in job["env"]["QUAY_ROBOT_USERNAME"]
+    assert "secrets.QUAY_ROBOT_TOKEN" in job["env"]["QUAY_ROBOT_TOKEN"]
+    assert "EXPECTED_REVISION" in workflow
+    assert "GITHUB_SHA" in workflow
+    assert "cosign sign --yes" in workflow
+    assert "cosign attest --yes" in workflow
+    assert "cosign verify-attestation" in workflow
+    assert "anchore/sbom-action@" in workflow
+    assert "--digestfile" in workflow
+    assert "quay.io/redhat-gpte/hybrid-fraud-detection" in workflow
+
+
 def test_validation_matrix_exposes_stage_records() -> None:
     document = yaml.safe_load((ROOT / "tests/validation_matrix.yaml").read_text())
     assert isinstance(document.get("stages"), list)

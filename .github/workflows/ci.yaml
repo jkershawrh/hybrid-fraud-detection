@@ -5,6 +5,15 @@ name: Lint and Test
 
 on:
   workflow_dispatch:
+    inputs:
+      publish_candidate:
+        description: Publish a signed, non-production intake candidate to Quay
+        type: boolean
+        default: false
+      expected_revision:
+        description: Exact 40-character source commit to publish
+        type: string
+        required: false
   push:
     branches: [main]
   pull_request:
@@ -89,3 +98,119 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: podman build -t hybrid-fraud-detection:test -f src/Containerfile src/
+
+  publish_candidate:
+    name: "Manual intake candidate: build, SBOM, sign, verify"
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_candidate == true && github.ref == 'refs/heads/codex/hybrid-fraud-immutable-images' }}
+    needs: [contracts, lint, test, compose-config, helm-lint, readme-check, showroom-build, container-build]
+    runs-on: ubuntu-latest
+    environment: intake-candidate-publish
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      IMAGE_REPOSITORY: quay.io/redhat-gpte/hybrid-fraud-detection
+      QUAY_ROBOT_USERNAME: ${{ secrets.QUAY_ROBOT_USERNAME }}
+      QUAY_ROBOT_TOKEN: ${{ secrets.QUAY_ROBOT_TOKEN }}
+      EXPECTED_REVISION: ${{ inputs.expected_revision }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Fail closed before registry writes
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! "$EXPECTED_REVISION" =~ ^[0-9a-f]{40}$ || "$EXPECTED_REVISION" != "$GITHUB_SHA" ]]; then
+            echo "Expected revision must equal the dispatched source commit" >&2
+            exit 1
+          fi
+          if [[ "$QUAY_ROBOT_USERNAME" != redhat-gpte+* || -z "$QUAY_ROBOT_TOKEN" ]]; then
+            echo "A redhat-gpte robot with scoped repository write access is required" >&2
+            exit 1
+          fi
+          if [[ ! "$GITHUB_RUN_ID" =~ ^[0-9]+$ || ! "$GITHUB_RUN_ATTEMPT" =~ ^[0-9]+$ ]]; then
+            echo "Invalid GitHub run identity" >&2
+            exit 1
+          fi
+          echo "IMAGE_TAG=intake-${GITHUB_SHA:0:12}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> "$GITHUB_ENV"
+      - name: Build the exact linux/amd64 source
+        shell: bash
+        run: |
+          set -euo pipefail
+          podman build --platform linux/amd64 \
+            --label "org.opencontainers.image.revision=$GITHUB_SHA" \
+            --label "org.opencontainers.image.source=https://github.com/$GITHUB_REPOSITORY" \
+            -t "localhost/hybrid-fraud-detection:$IMAGE_TAG" -f src/Containerfile src/
+          podman run --rm --platform linux/amd64 --entrypoint python \
+            "localhost/hybrid-fraud-detection:$IMAGE_TAG" -c \
+            'from fastapi.testclient import TestClient; from scorer import app; c=TestClient(app); assert c.get("/ready").status_code == 200; assert c.post("/api/v1/score", json={"amount":50,"country":"US","category":"retail"}).status_code == 200'
+      - name: Authenticate with a repository-scoped Quay robot
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          mkdir -p "$RUNNER_TEMP/registry-auth"
+          printf '%s' "$QUAY_ROBOT_TOKEN" | podman login \
+            --authfile "$RUNNER_TEMP/registry-auth/config.json" \
+            --username "$QUAY_ROBOT_USERNAME" --password-stdin quay.io
+          echo "DOCKER_CONFIG=$RUNNER_TEMP/registry-auth" >> "$GITHUB_ENV"
+          echo "REGISTRY_AUTH_FILE=$RUNNER_TEMP/registry-auth/config.json" >> "$GITHUB_ENV"
+      - name: Push one uniquely tagged candidate and capture its digest
+        shell: bash
+        run: |
+          set -euo pipefail
+          podman tag "localhost/hybrid-fraud-detection:$IMAGE_TAG" "$IMAGE_REPOSITORY:$IMAGE_TAG"
+          podman push --authfile "$REGISTRY_AUTH_FILE" \
+            --digestfile "$RUNNER_TEMP/image.digest" "$IMAGE_REPOSITORY:$IMAGE_TAG"
+          digest="$(< "$RUNNER_TEMP/image.digest")"
+          if [[ ! "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+            echo "Registry did not return an immutable image digest" >&2
+            exit 1
+          fi
+          echo "IMAGE_REF=$IMAGE_REPOSITORY@$digest" >> "$GITHUB_ENV"
+      - uses: sigstore/cosign-installer@ba7bc0a3fef59531c69a25acd34668d6d3fe6f22 # v4.1.0
+      - name: Generate an SBOM for the pushed digest
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0
+        with:
+          image: ${{ env.IMAGE_REF }}
+          registry-username: ${{ secrets.QUAY_ROBOT_USERNAME }}
+          registry-password: ${{ secrets.QUAY_ROBOT_TOKEN }}
+          output-file: ${{ runner.temp }}/candidate.spdx.json
+          format: spdx-json
+          upload-artifact: false
+          upload-release-assets: false
+      - name: Sign the digest and attest SBOM plus source identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s "$RUNNER_TEMP/candidate.spdx.json"
+          jq -n --arg repository "https://github.com/$GITHUB_REPOSITORY" \
+            --arg revision "$GITHUB_SHA" --arg image "$IMAGE_REF" \
+            --arg workflow "https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            '{source_repository:$repository,source_revision:$revision,subject_image:$image,workflow_run:$workflow,build_platform:"linux/amd64"}' \
+            > "$RUNNER_TEMP/source-provenance.json"
+          cosign sign --yes "$IMAGE_REF"
+          cosign attest --yes --type spdxjson \
+            --predicate "$RUNNER_TEMP/candidate.spdx.json" "$IMAGE_REF"
+          cosign attest --yes --type custom \
+            --predicate "$RUNNER_TEMP/source-provenance.json" "$IMAGE_REF"
+      - name: Verify exact GitHub workflow signer and subject
+        shell: bash
+        run: |
+          set -euo pipefail
+          identity="https://github.com/$GITHUB_REPOSITORY/.github/workflows/ci.yaml@refs/heads/codex/hybrid-fraud-immutable-images"
+          issuer="https://token.actions.githubusercontent.com"
+          cosign verify --certificate-identity="$identity" \
+            --certificate-oidc-issuer="$issuer" "$IMAGE_REF" > /dev/null
+          cosign verify-attestation --type spdxjson \
+            --certificate-identity="$identity" --certificate-oidc-issuer="$issuer" \
+            "$IMAGE_REF" > /dev/null
+          cosign verify-attestation --type custom \
+            --certificate-identity="$identity" --certificate-oidc-issuer="$issuer" \
+            "$IMAGE_REF" > /dev/null
+          {
+            echo "Candidate image: $IMAGE_REF"
+            echo "Source revision: $GITHUB_SHA"
+            echo "Status: signed candidate only; no catalog activation"
+          } >> "$GITHUB_STEP_SUMMARY"
