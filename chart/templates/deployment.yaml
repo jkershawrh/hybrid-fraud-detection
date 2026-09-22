@@ -1,3 +1,6 @@
+{{- if and .Values.model.endpointFromSecret (not .Values.model.existingSecret) }}
+{{- fail "model.existingSecret is required when model.endpointFromSecret is true" }}
+{{- end }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -25,12 +28,26 @@ spec:
             - containerPort: 8000
               protocol: TCP
           env:
-            {{- if .Values.model.endpoint }}
+            {{- if .Values.model.endpointFromSecret }}
+            - name: MODEL_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.model.existingSecret | quote }}
+                  key: endpoint
+            {{- else if .Values.model.endpoint }}
             - name: MODEL_ENDPOINT
               value: {{ .Values.model.endpoint | quote }}
             {{- end }}
+            {{- if .Values.model.endpointFromSecret }}
+            - name: MODEL_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.model.existingSecret | quote }}
+                  key: name
+            {{- else }}
             - name: MODEL_NAME
               value: {{ .Values.model.name | default "granite-2b-cpu" | quote }}
+            {{- end }}
             {{- if .Values.model.existingSecret }}
             - name: MODEL_API_KEY
               valueFrom:
@@ -39,7 +56,7 @@ spec:
                   key: {{ .Values.model.apiKeySecretKey | default "api-key" | quote }}
             {{- end }}
             - name: DEMO_MODE
-              value: {{ if .Values.model.endpoint }}"false"{{ else }}"true"{{ end }}
+              value: {{ if or .Values.model.endpoint .Values.model.endpointFromSecret }}"false"{{ else }}"true"{{ end }}
             - name: RULE_WEIGHT
               value: {{ .Values.scoring.ruleWeight | quote }}
             - name: LLM_WEIGHT

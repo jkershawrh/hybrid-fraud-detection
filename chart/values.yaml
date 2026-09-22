@@ -13,6 +13,9 @@ model:
   name: qwen2.5:0.5b
   endpoint: ""
   existingSecret: ""
+  # Launchpad can inject endpoint, model name, and API key into this Secret.
+  # When enabled, avoid putting the selected endpoint or credential in Argo values.
+  endpointFromSecret: false
   apiKeySecretKey: api-key
 
 scoring:
