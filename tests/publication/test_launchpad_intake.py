@@ -29,9 +29,15 @@ def test_candidate_publisher_is_manual_scoped_and_signed() -> None:
     assert "inputs.publish_candidate == true" in job["if"]
     assert "refs/heads/codex/hybrid-fraud-immutable-images" in job["if"]
     assert set(job["needs"]) == set(document["jobs"]) - {"publish_candidate"}
-    assert job["permissions"] == {"contents": "read", "id-token": "write"}
-    assert "secrets.QUAY_ROBOT_USERNAME" in job["env"]["QUAY_ROBOT_USERNAME"]
-    assert "secrets.QUAY_ROBOT_TOKEN" in job["env"]["QUAY_ROBOT_TOKEN"]
+    assert job["permissions"] == {
+        "contents": "read",
+        "id-token": "write",
+        "packages": "write",
+    }
+    assert "QUAY_ROBOT_USERNAME" not in workflow
+    assert "QUAY_ROBOT_TOKEN" not in workflow
+    assert "secrets.GITHUB_TOKEN" in workflow
+    assert "vars.CANDIDATE_PUBLISH_ENABLED" in workflow
     assert "EXPECTED_REVISION" in workflow
     assert "GITHUB_SHA" in workflow
     assert "cosign sign --yes" in workflow
@@ -39,7 +45,7 @@ def test_candidate_publisher_is_manual_scoped_and_signed() -> None:
     assert "cosign verify-attestation" in workflow
     assert "anchore/sbom-action@" in workflow
     assert "--digestfile" in workflow
-    assert "quay.io/redhat-gpte/hybrid-fraud-detection" in workflow
+    assert "ghcr.io/jkershawrh/hybrid-fraud-detection" in workflow
 
 
 def test_validation_matrix_exposes_stage_records() -> None:
