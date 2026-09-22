@@ -7,7 +7,7 @@ metadata:
 spec:
   containers:
     - name: test
-      image: registry.access.redhat.com/ubi9/ubi-minimal:9.6
+      image: registry.access.redhat.com/ubi9/ubi-minimal@sha256:34880b64c07f28f64d95737f82f891516de9a3b43583f39970f7bf8e4cfa48b7
       command: ["sh", "-c"]
       args:
         - |

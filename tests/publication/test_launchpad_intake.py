@@ -1,11 +1,22 @@
 """Publication checks required by the Launchpad Quickstart intake contract."""
 
 import json
+import re
 from pathlib import Path
 
 import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
+IMMUTABLE_IMAGE = re.compile(r"^[^\s@]+@sha256:[0-9a-f]{64}$")
+
+
+def test_base_and_smoke_images_are_immutable() -> None:
+    hook = yaml.safe_load((ROOT / "chart/templates/test-scorer.yaml").read_text())
+    containerfile = (ROOT / "src/Containerfile").read_text().splitlines()
+    base_image = next(line.removeprefix("FROM ") for line in containerfile if line.startswith("FROM "))
+
+    assert IMMUTABLE_IMAGE.fullmatch(hook["spec"]["containers"][0]["image"])
+    assert IMMUTABLE_IMAGE.fullmatch(base_image)
 
 
 def test_validation_matrix_exposes_stage_records() -> None:
