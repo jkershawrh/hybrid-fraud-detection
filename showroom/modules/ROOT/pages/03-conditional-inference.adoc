@@ -37,6 +37,11 @@ the example high-risk category contributes 15, and the round amount contributes
 5. The expected rule score is 30—between the skip thresholds—so the provider
 adapter should be called.
 
+In *Hybrid Decision Casebook → Score Transaction*, load the second guided
+example. Compare its path with the low and high cases: the rule evidence remains
+visible, but this middle score crosses the provider boundary unless inference
+falls back explicitly.
+
 [source,sh,role="execute",subs=attributes+]
 ----
 curl -ksS -X POST "$SCORER_ROUTE/api/v1/score" \
@@ -94,6 +99,10 @@ model unavailability as proof of a hybrid call.
 The description field is data, even when it looks like an instruction. Submit
 an adversarial-looking synthetic description and inspect the same bounded
 response contract.
+
+Load the fourth guided Casebook example first. Its description looks like an
+instruction, but the workspace should still show the same bounded score fields
+and evidence separation. Terminal then verifies the structural contract.
 
 [source,sh,role="execute",subs=attributes+]
 ----

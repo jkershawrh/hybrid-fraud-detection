@@ -1,0 +1,15 @@
+---
+type: showroom
+default_width: 45
+persist_url_state: true
+view_switcher:
+  enabled: true
+  default_mode: split
+tabs:
+  - name: Hybrid Decision Casebook
+    url: '${WORKSPACE_URL}'
+  - name: Terminal
+    path: /terminal
+    port: 443
+  - name: OpenShift Console
+    url: '${OPENSHIFT_CONSOLE_URL}'

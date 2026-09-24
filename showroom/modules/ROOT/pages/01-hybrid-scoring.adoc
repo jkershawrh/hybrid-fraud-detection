@@ -45,6 +45,11 @@ identity is not a cluster-wide administrator.
 
 == See: inspect the application components
 
+Open *Hybrid Decision Casebook*. Read the four-step journey at the top and
+locate its three internal tabs: *Score Transaction*, *Batch Analysis*, and
+*Statistics*. Do not submit a case yet; first use Terminal and Console to prove
+what backs the workspace.
+
 The scorer and participant UI run together so that the UI can call the API on
 the pod-local network without exposing credentials to the browser. OpenShift
 Services and Routes expose only the declared interfaces.
@@ -61,6 +66,11 @@ oc get pods -n "{project_name}" \
 The application pod should report two ready containers: `scorer` and `ui`.
 The UI is the business-facing experience; the scorer route remains available
 for health checks and the guided API exercises below.
+
+Open *OpenShift Console* and find the same Deployment, pod, Services, and Routes
+in your project. The Casebook is the participant-facing UI Route; the scorer
+Route supports direct contract exercises. Return to Terminal after confirming
+both containers are ready.
 
 == See: establish the API endpoint
 
@@ -147,7 +157,8 @@ process; it is not a universal cost or performance claim.
 
 == See: use the participant workspace
 
-Open the *Fraud Scoring Workspace* tab. Submit the same two fictional examples
+Open *Hybrid Decision Casebook*. In *Score Transaction*, load the low and
+ambiguous guided examples and submit the same two fictional examples
 and compare the risk badge, signal list, scorer identity, and measured latency.
 The Batch Analysis tab demonstrates the same contract for multiple synthetic
 records, while Statistics shows the cumulative decision mix.

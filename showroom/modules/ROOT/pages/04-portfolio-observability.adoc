@@ -120,10 +120,15 @@ and hardware identity, success rate, and resource saturation evidence.
 
 == See: use the visual workspace
 
-Open the *Fraud Scoring Workspace* tab and choose *Batch Analysis*. Submit the
-same three records. Then open *Statistics*. The UI should communicate the same
+Open *Hybrid Decision Casebook* and choose *Batch Analysis*. The default JSON
+is the same low, ambiguous, and high portfolio used above. Submit it, then open
+*Statistics* and refresh. The UI should communicate the same
 contract as the API: visible signals, model-use status, scorer identity, and
 measured latency. It is an explanation surface, not an approval console.
+
+This is the continuity checkpoint: the three individual cases are now one
+portfolio, and Statistics shows the cumulative path mix created by your own
+journey rather than an unexplained empty dashboard.
 
 == Verify
 

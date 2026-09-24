@@ -63,6 +63,22 @@ You will verify the mode before drawing conclusions. Model output is
 nondeterministic, so the exercises validate structure, bounds, routing, and
 evidence rather than exact prose or an exact score.
 
+== How to use the workspaces
+
+The same synthetic cases appear through three views:
+
+* *Hybrid Decision Casebook* is the visual case workspace. Its guided examples
+  follow the low, ambiguous, high, and adversarial cases used in the modules.
+* *Terminal* is the evidence workspace. It exposes exact API responses and runs
+  assertions that do not depend on the UI presentation.
+* *OpenShift Console* is the platform workspace. It shows the scorer and UI
+  workloads, Routes, health, configuration, and namespace boundary.
+
+Begin a case in the Casebook, prove it in Terminal, and return to the Casebook
+to interpret the result. Use the Console only at named platform checkpoints.
+This keeps the lab centered on one accumulating decision journey instead of
+three unrelated tabs.
+
 == Estimated time
 
 75 minutes. Complete the modules in order to preserve the evidence trail.

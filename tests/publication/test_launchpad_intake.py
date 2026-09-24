@@ -110,6 +110,22 @@ def test_showroom_delivers_the_full_decision_journey() -> None:
     }
 
 
+def test_showroom_owns_and_explains_the_workspace_contract() -> None:
+    config = yaml.safe_load((ROOT / "ui-config.yml").read_text())
+    assert [tab["name"] for tab in config["tabs"]] == [
+        "Hybrid Decision Casebook",
+        "Terminal",
+        "OpenShift Console",
+    ]
+    content = "\n".join(
+        path.read_text() for path in (ROOT / "showroom/modules/ROOT/pages").glob("*.adoc")
+    )
+    assert content.count("Hybrid Decision Casebook") >= 7
+    ui = (ROOT / "src/ui.py").read_text()
+    for stage in ("calculate rule evidence", "route ambiguity", "compare a portfolio", "challenge and govern"):
+        assert stage in ui
+
+
 def test_helm_chart_exposes_the_participant_ui() -> None:
     deployment = (ROOT / "chart/templates/deployment.yaml").read_text()
     service = (ROOT / "chart/templates/service.yaml").read_text()

@@ -27,6 +27,11 @@ No single layer makes a consequential AI system safe:
 The lab demonstrates pieces of the first two layers. It does not certify the
 last two.
 
+Return to *Hybrid Decision Casebook → Statistics* and refresh. Treat the
+visible totals as the operational footprint of the cases you just exercised.
+The governance work below adds the missing review layer; it does not turn those
+statistics into accuracy or compliance evidence.
+
 == See: confirm platform boundaries
 
 Resolve the namespace and scorer, then inspect only information available to
