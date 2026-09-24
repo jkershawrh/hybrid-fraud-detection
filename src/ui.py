@@ -209,20 +209,20 @@ with gr.Blocks(title="Hybrid Fraud Detection") as demo:
         )
         with gr.Row():
             with gr.Column():
-                amount = gr.Number(label="Amount ($)", value=15000)
+                amount = gr.Number(label="Amount ($)", value=50)
                 country = gr.Dropdown(
                     label="Country",
                     choices=[(COUNTRY_LABELS[c], c) for c in COUNTRIES],
-                    value="NG",
+                    value="US",
                 )
                 category = gr.Dropdown(
                     label="Category",
                     choices=CATEGORIES,
-                    value="wire_transfer",
+                    value="retail",
                 )
                 description = gr.Textbox(
                     label="Description",
-                    value="Overseas wire transfer to Nigeria",
+                    value="Synthetic neighborhood purchase",
                 )
                 score_btn = gr.Button("Score Transaction", variant="primary")
             with gr.Column():
