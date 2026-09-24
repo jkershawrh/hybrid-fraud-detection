@@ -57,6 +57,23 @@ def readme_text():
 def readme_lines(readme_text):
     return readme_text.splitlines()
 
+    def test_showroom_execute_blocks_have_launchpad_controls(self):
+        pages = list((ROOT / "showroom" / "modules" / "ROOT" / "pages").glob("*.adoc"))
+        execute_blocks = sum(
+            page.read_text(encoding="utf-8").count('role="execute"')
+            for page in pages
+        )
+        self.assertGreater(execute_blocks, 0)
+
+        script = ROOT / "showroom" / "supplemental-ui" / "js" / "vendor" / "clipboard.js"
+        self.assertTrue(script.is_file())
+        source = script.read_text(encoding="utf-8")
+        self.assertIn("Run in terminal", source)
+        self.assertIn("pasteToTerminal", source)
+
+        playbook = (ROOT / "site.yml").read_text(encoding="utf-8")
+        self.assertIn("supplemental_files: ./showroom/supplemental-ui", playbook)
+
 
 class TestTitleAndDescription:
     def test_h1_exists(self, readme_lines):
