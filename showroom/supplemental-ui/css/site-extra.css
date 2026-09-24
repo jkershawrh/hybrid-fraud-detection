@@ -1,0 +1,87 @@
+/* Intel x Red Hat Launchpad partnership header. */
+
+.launchpad-showroom-navbar-brand {
+  align-items: center;
+  display: flex;
+  max-width: none;
+  min-width: 0;
+  width: 100%;
+}
+
+.launchpad-showroom-brand {
+  align-items: center;
+  display: inline-flex;
+  flex: none;
+  gap: 0.6rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  text-decoration: none;
+}
+
+.launchpad-showroom-brand:hover {
+  background: transparent;
+  text-decoration: none;
+}
+
+.launchpad-showroom-intel {
+  display: block;
+  height: 1.15rem;
+  width: auto;
+}
+
+.launchpad-showroom-partnership {
+  color: #d2d2d2;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.launchpad-showroom-rhdp {
+  display: block;
+  height: 1.55rem;
+  max-width: 13rem;
+  width: auto;
+}
+
+.launchpad-showroom-title {
+  border-left: 1px solid #6a6e73;
+  color: #fff !important;
+  display: block;
+  flex: 1 1 auto;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.25;
+  min-width: 0;
+  overflow: hidden;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+  .launchpad-showroom-brand {
+    gap: 0.4rem;
+    padding-left: 0.65rem;
+    padding-right: 0.65rem;
+  }
+
+  .launchpad-showroom-intel {
+    height: 1rem;
+  }
+
+  .launchpad-showroom-rhdp {
+    height: 1.25rem;
+    max-width: 10.5rem;
+  }
+
+  .launchpad-showroom-title {
+    font-size: 0.8rem;
+    padding-left: 0.65rem;
+  }
+}
+
+@media (max-width: 540px) {
+  .launchpad-showroom-title {
+    display: none;
+  }
+}
