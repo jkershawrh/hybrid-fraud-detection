@@ -1,4 +1,8 @@
 .Hybrid Fraud Detection
 * xref:index.adoc[Welcome]
-* xref:01-hybrid-scoring.adoc[Build and Explain a Hybrid Decision]
+* xref:01-hybrid-scoring.adoc[1. Understand the Architecture]
+* xref:02-rule-evidence.adoc[2. Build Deterministic Evidence]
+* xref:03-conditional-inference.adoc[3. Route Ambiguous Cases]
+* xref:04-portfolio-observability.adoc[4. Analyze the Portfolio]
+* xref:05-challenge-and-govern.adoc[5. Challenge and Govern]
 * xref:conclusion.adoc[Review and Next Steps]

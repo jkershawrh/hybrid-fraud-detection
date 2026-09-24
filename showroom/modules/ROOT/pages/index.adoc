@@ -1,55 +1,71 @@
 = Hybrid Fraud Detection on Intel Xeon
 :navtitle: Welcome
+:imagesdir: ../assets/images
 
-== The business problem
+== A decision journey, not a scoring trick
 
-Risk teams need fast, explainable screening without paying the inference cost
-of sending every obvious case to a language model. In this guided build, you
-will examine a rule-first, AI-second pattern that keeps deterministic evidence
-visible and calls a model only for ambiguous synthetic transactions.
+A payment processor receives transactions with different amounts, locations,
+and business contexts. Some cases are easy to explain. Others need additional
+assessment. Sending every transaction to a language model would add cost and
+latency while hiding a useful fact: many decisions begin with evidence that can
+be calculated deterministically.
 
-This is an educational architecture exercise. The included rules, data, and
-scores are examples and are not a trained fraud model, a regulatory control,
-or advice for real financial decisions.
+In this 75-minute experience, you play the platform and risk engineer asked to
+make that decision path visible. You will inspect a deployed application,
+calculate rule evidence by hand, route only an ambiguous case to an
+OpenAI-compatible model, analyze a small synthetic portfolio, and challenge the
+result as a reviewer would.
 
-== What you will build and explain
+The goal is not to build a production fraud detector. The goal is to leave with
+an explainable architecture pattern and a concrete list of controls still
+required before a consequential system could be considered.
 
-You will:
+image::hybrid-architecture.svg[Hybrid fraud detection architecture showing an OpenShift-hosted UI and scorer using deterministic rules before conditional model inference,width=100%]
 
-* inspect the scorer and participant UI running in your OpenShift namespace;
-* compare a transaction that skips model inference with one that requires it;
-* trace the rule signals, model contribution, and final weighted result;
-* observe measured latency and cumulative model-call statistics; and
-* identify the controls required before adapting the pattern to a real domain.
+== The story you will follow
 
-== Architecture
-
-[cols="1,3",options="header"]
+[cols="1,2,3",options="header"]
 |===
-| Component | Purpose
-
-| Participant UI
-| Collects synthetic transaction fields and displays the explanation, measured
-latency, and active scorer.
-
-| FastAPI scorer
-| Applies deterministic signals, decides whether model review is needed, calls
-an OpenAI-compatible endpoint when required, and returns a structured result.
-
-| Launchpad MaaS
-| Supplies the approved model endpoint and short-lived lab credential when the
-catalog is configured for live inference.
-
-| OpenShift
-| Isolates the participant workload, routes, identity, and runtime Secret in
-one namespace on Intel Xeon infrastructure.
+|Stage |Question |Evidence you produce
+|Understand |What is deployed, and where are its trust boundaries? |Namespace, workload, Route, readiness mode, and component map
+|Build |Can obvious decisions be reproduced without AI? |Two hand-calculated rule scores and API contract checks
+|Route |When is inference useful, and how is its contribution bounded? |An ambiguous result, formula check, model-mode evidence, and fallback interpretation
+|Analyze |What happens across a mixed set of transactions? |A batch report, path distribution, latency observations, and process statistics
+|Govern |What can this result prove, and what remains unresolved? |Boundary tests and a reusable review artifact with explicit open gates
 |===
 
-== Safety boundary
+== Red Hat and Intel roles
 
-Use only the provided fictional examples or your own synthetic data. Do not
-enter customer, payment-card, personal, regulated, confidential, or
-export-controlled information.
+Red Hat OpenShift supplies deployment, isolation, service identity, Routes,
+health checks, and operational evidence. The application uses an
+OpenAI-compatible provider contract so the inference endpoint can change
+without rewriting the decision workflow. Intel Xeon is the CPU execution
+context for the qualified model service; the learner claim is functional,
+repeatable inference—not a universal latency or accuracy guarantee.
+
+The application makes three responsibilities visible:
+
+* *Rules* produce deterministic signals whose arithmetic can be inspected.
+* *Inference* contributes a bounded score only for configured ambiguous cases.
+* *Policy and people* decide whether the example is suitable for real use,
+  which this lab deliberately does not claim.
+
+== Prerequisites and lab boundaries
+
+Launchpad provides a browser terminal authenticated to your assigned OpenShift
+namespace. You need basic familiarity with command-line tools and JSON, but no
+machine-learning background is required. All transaction records are fictional.
+Do not paste customer, cardholder, employee, or other sensitive information
+into the application.
+
+The model may be live or the environment may use a clearly labeled simulator.
+You will verify the mode before drawing conclusions. Model output is
+nondeterministic, so the exercises validate structure, bounds, routing, and
+evidence rather than exact prose or an exact score.
+
+== Estimated time
+
+75 minutes. Complete the modules in order to preserve the evidence trail.
 
 [.next-nav]
-xref:01-hybrid-scoring.adoc[Start the guided build ->]
+xref:01-hybrid-scoring.adoc[Start with the architecture ->]

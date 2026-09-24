@@ -1,23 +1,52 @@
 = Review and Next Steps
 :navtitle: Conclusion
 
-== What you proved
+== You completed the journey
 
-You inspected an isolated OpenShift workload, compared rule-only and hybrid
-execution, observed model-use statistics, and validated the response contract.
+You followed a decision from platform boundary to rule evidence, conditional
+inference, portfolio behavior, and governance review.
 
-You can now explain:
+You proved that:
 
-* why deterministic signals remain visible;
-* when the configured policy avoids a model call;
-* how ambiguous cases use a bounded model response;
-* why measured latency and mode must accompany any performance claim; and
-* which governance controls are required before adapting the pattern.
+* the learner identity is scoped to one OpenShift namespace;
+* obvious synthetic cases can produce reproducible rule evidence without a model call;
+* ambiguous cases cross an explicit inference boundary and expose whether that call succeeded or fell back;
+* the model contribution is bounded by a visible combination formula;
+* batch and process statistics reveal which execution paths were used; and
+* a technically valid response is not the same as a validated business decision.
 
-== Leave with a solution pattern
+== The reusable pattern
 
-The reusable pattern is not a fraud product. It is an explainable conditional
-inference architecture that can be evaluated for other synthetic triage,
-prioritization, and review scenarios on Intel Xeon and Red Hat OpenShift.
+The valuable artifact is the pattern, not the sample score:
 
-Return to the participant home page when you are ready to resume another lab.
+. calculate inspectable evidence first;
+. define explicit thresholds for when another assessment is warranted;
+. isolate the model behind a portable provider interface;
+. return decision metadata with the result;
+. measure the path that actually ran; and
+. require domain, risk, legal, privacy, security, and compliance review before consequential use.
+
+Your policy review file records both the evidence you observed and the gates
+that remain open. That separation helps a team avoid turning a successful demo
+into an unsupported production claim.
+
+== What this lab does not prove
+
+It does not establish fraud-detection accuracy, fairness, regulatory
+compliance, financial benefit, hardware superiority, or production readiness.
+The rules, countries, categories, thresholds, weights, and synthetic records
+exist to teach architecture. A real solution needs representative labeled data,
+approved features, model and rule provenance, protected data handling,
+monitoring and drift controls, human review and appeal paths, and accountable
+owners.
+
+== Recommended next steps
+
+Use the exported review as the starting point for a design workshop. Replace
+the illustrative signals only after domain owners define acceptable evidence.
+Create an evaluation set covering normal cases, edge cases, harmful disparities,
+endpoint failures, and adversarial input. Add release gates so changes to rules,
+prompts, models, or thresholds cannot bypass evaluation and approval.
+
+The strongest outcome is an explainable system whose limitations remain as
+visible as its result.

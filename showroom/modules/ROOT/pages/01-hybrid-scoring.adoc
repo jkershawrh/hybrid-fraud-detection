@@ -1,5 +1,6 @@
-= Build and Explain a Hybrid Decision
-:navtitle: Guided Build
+= Understand the Hybrid Architecture
+:navtitle: Architecture
+:imagesdir: ../assets/images
 
 == What you will learn
 
@@ -10,6 +11,18 @@ By completing this module, you will be able to:
 * trace an ambiguous case through an OpenAI-compatible model endpoint;
 * interpret the rule, model, combined score, latency, and skip statistics; and
 * identify what must change before the pattern can support a real decision.
+
+The learner journey begins at the platform boundary. Before trusting any score,
+you should know which identity you are using, which namespace contains the
+workload, what the browser can reach, and whether inference is live or
+simulated. Those facts determine what later evidence can honestly support.
+
+image::hybrid-architecture.svg[OpenShift deployment boundary containing the participant UI and scoring API with conditional access to an OpenAI-compatible model service,width=100%]
+
+The browser talks to the participant UI. The UI and scorer run together in the
+assigned namespace, while OpenShift Services and Routes expose only declared
+interfaces. The scorer—not the browser—owns the model-provider interaction.
+This keeps endpoint configuration and credentials out of participant content.
 
 == See: confirm your isolated environment
 
@@ -187,4 +200,4 @@ from measurable control and review—not from treating an educational risk score
 as an automated decision.
 
 [.next-nav]
-xref:conclusion.adoc[Review the solution ->]
+xref:02-rule-evidence.adoc[Build deterministic evidence ->]

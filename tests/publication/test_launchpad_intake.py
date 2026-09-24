@@ -84,6 +84,32 @@ def test_showroom_contains_a_complete_hands_on_module() -> None:
         assert "== Key takeaway" in text
 
 
+def test_showroom_delivers_the_full_decision_journey() -> None:
+    pages = ROOT / "showroom/modules/ROOT/pages"
+    nav = (ROOT / "showroom/modules/ROOT/nav.adoc").read_text()
+    journey = [
+        "01-hybrid-scoring.adoc",
+        "02-rule-evidence.adoc",
+        "03-conditional-inference.adoc",
+        "04-portfolio-observability.adoc",
+        "05-challenge-and-govern.adoc",
+    ]
+
+    for page in journey:
+        assert (pages / page).is_file()
+        assert page in nav
+
+    total_words = sum(len(path.read_text().split()) for path in pages.glob("*.adoc"))
+    assert total_words >= 4500
+
+    images = ROOT / "showroom/modules/ROOT/assets/images"
+    assert {path.name for path in images.glob("*.svg")} >= {
+        "hybrid-architecture.svg",
+        "decision-flow.svg",
+        "governance-layers.svg",
+    }
+
+
 def test_helm_chart_exposes_the_participant_ui() -> None:
     deployment = (ROOT / "chart/templates/deployment.yaml").read_text()
     service = (ROOT / "chart/templates/service.yaml").read_text()

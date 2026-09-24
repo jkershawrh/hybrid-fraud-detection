@@ -1,0 +1,133 @@
+= Build Deterministic Evidence
+:navtitle: Deterministic Evidence
+:imagesdir: ../assets/images
+
+== What you will learn
+
+In this module, you will calculate the sample rule score yourself, compare two
+confidence extremes, and prove that those cases do not consume model capacity.
+The purpose is not to endorse the rules. It is to demonstrate why inspectable
+evidence should remain separate from model judgment.
+
+== See: follow the decision path
+
+image::decision-flow.svg[Decision flow from deterministic evidence through confidence thresholds to optional model assessment,width=100%]
+
+Every transaction starts with a base score of 10. The educational rule engine
+then adds visible signals:
+
+[cols="2,1,3",options="header"]
+|===
+|Illustrative signal |Points |Condition
+|High amount |30 |Amount is greater than 10,000
+|Example country match |25 |Country appears in the sample list
+|Example category match |15 |Category appears in the sample list
+|Round amount |5 |Amount is an exact multiple of 1,000
+|Crypto category |10 |Additional example weight for `crypto`
+|===
+
+A score at or below 10 takes the low-confidence-extreme path. A score at or
+above 90 takes the high-confidence-extreme path. Both skip inference. Scores
+between the thresholds are considered ambiguous by this sample and continue to
+the model adapter.
+
+These values are teaching aids. They were not learned from historical fraud,
+validated against outcomes, or approved for financial decisions.
+
+== See: restore your endpoint
+
+Each browser-terminal module may start with a fresh shell. Resolve the Route
+again rather than relying on a copied hostname.
+
+[source,sh,role="execute"]
+----
+SCORER_HOST="$(oc get route -n "{project_name}" \
+  -l app.kubernetes.io/name=hybrid-fraud-detection \
+  -o custom-columns=NAME:.metadata.name,HOST:.spec.host --no-headers \
+  | awk '$1 ~ /-scorer$/ {print $2; exit}')"
+SCORER_ROUTE="https://$SCORER_HOST"
+test -n "$SCORER_HOST" && curl -ksS "$SCORER_ROUTE/health"
+----
+
+== See: calculate the low case
+
+Consider a fictional 50 USD retail purchase in the United States. It is not
+over 10,000, does not match the illustrative country or category lists, is not
+a multiple of 1,000, and is not crypto. Its expected score is therefore the
+base 10.
+
+[source,sh,role="execute",subs=attributes+]
+----
+curl -ksS -X POST "$SCORER_ROUTE/api/v1/score" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "amount": 50,
+    "currency": "USD",
+    "country": "US",
+    "category": "retail",
+    "description": "Synthetic neighborhood purchase"
+  }' | tee /tmp/low-evidence.json | python3 -m json.tool
+----
+
+Inspect `rule_score`, `signals`, `llm_skipped`, `skip_reason`, and `model`.
+The result should show 10, no added signals, and `rule-engine-only`. This is a
+reproducible control-path assertion, not proof the transaction is legitimate.
+
+== See: calculate the high case
+
+Now use a fictional 15,000 USD crypto transaction in country `NG`. Calculate
+before running it: base 10 + high amount 30 + country 25 + category 15 + round
+amount 5 + crypto 10 = 95. That crosses the configured high threshold.
+
+[source,sh,role="execute",subs=attributes+]
+----
+curl -ksS -X POST "$SCORER_ROUTE/api/v1/score" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "amount": 15000,
+    "currency": "USD",
+    "country": "NG",
+    "category": "crypto",
+    "description": "Synthetic digital-asset transfer"
+  }' | tee /tmp/high-evidence.json | python3 -m json.tool
+----
+
+The useful evidence is not merely the final label. It is the list of named
+signals and their contributions, the explicit skip decision, and the ability to
+reproduce 95 independently.
+
+== Verify
+
+Check both contracts and independently sum the high-case signal evidence.
+
+[source,sh,role="execute"]
+----
+python3 - <<'PY'
+import json
+
+low = json.load(open('/tmp/low-evidence.json', encoding='utf-8'))
+high = json.load(open('/tmp/high-evidence.json', encoding='utf-8'))
+
+assert low['rule_score'] == 10
+assert low['llm_skipped'] is True
+assert low['llm_score'] is None
+assert high['rule_score'] == 95
+assert high['llm_skipped'] is True
+assert sum(s['weight'] for s in high['signals']) + 10 == 95
+assert high['model'] == 'rule-engine-only'
+print('Deterministic evidence: PASS')
+PY
+----
+
+If this check fails, do not rationalize the result. Reinspect the request and
+returned evidence. Reproducibility is the reason to keep the rule layer visible.
+
+== Key takeaway
+
+Deterministic evidence can be calculated, reviewed, and tested without asking a
+model to explain it after the fact. Skipping inference at configured extremes
+can reduce unnecessary model calls, but the thresholds and features still need
+domain validation before they have business meaning.
+
+[.next-nav]
+xref:03-conditional-inference.adoc[Route an ambiguous case ->]

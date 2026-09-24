@@ -1,0 +1,155 @@
+= Analyze the Portfolio
+:navtitle: Portfolio Analysis
+
+== What you will learn
+
+A single result cannot show how a routing policy behaves as a system. In this
+module you will submit a mixed synthetic portfolio, classify which execution
+path each record used, inspect cumulative statistics, and separate measured lab
+behavior from unsupported cost or performance claims.
+
+== See: define a small evaluation portfolio
+
+The three records deliberately exercise different regions of the decision
+policy:
+
+* a low case expected to stop at rule score 10;
+* an ambiguous case expected to request model assessment; and
+* a high case expected to stop at rule score 95.
+
+This is a routing test, not an accuracy evaluation. There are no ground-truth
+fraud labels, no representative sampling, and no claim that three records
+describe a real transaction population.
+
+Resolve the Route, create the batch payload, and submit it.
+
+[source,sh,role="execute"]
+----
+SCORER_HOST="$(oc get route -n "{project_name}" \
+  -l app.kubernetes.io/name=hybrid-fraud-detection \
+  -o custom-columns=NAME:.metadata.name,HOST:.spec.host --no-headers \
+  | awk '$1 ~ /-scorer$/ {print $2; exit}')"
+SCORER_ROUTE="https://$SCORER_HOST"
+
+curl -ksS -X POST "$SCORER_ROUTE/api/v1/batch" \
+  -H 'Content-Type: application/json' \
+  -d '{"transactions":[
+    {"amount":50,"currency":"USD","country":"US","category":"retail","description":"Synthetic local purchase"},
+    {"amount":5000,"currency":"USD","country":"US","category":"wire_transfer","description":"Synthetic changed supplier account"},
+    {"amount":15000,"currency":"USD","country":"NG","category":"crypto","description":"Synthetic digital-asset transfer"}
+  ]}' | tee /tmp/portfolio.json | python3 -m json.tool
+----
+
+== See: turn responses into operational evidence
+
+Instead of reading a long JSON document visually, produce a compact report of
+each path. The middle request may show hybrid inference or explicit fallback,
+depending on endpoint availability. Both outcomes must be distinguishable.
+
+[source,sh,role="execute"]
+----
+python3 - <<'PY'
+import json
+
+batch = json.load(open('/tmp/portfolio.json', encoding='utf-8'))
+for number, result in enumerate(batch['results'], start=1):
+    if result['llm_skipped'] and result['rule_score'] in (10, 95):
+        path = 'CONFIDENT_RULE_ONLY'
+    elif result['llm_skipped']:
+        path = 'MODEL_FALLBACK'
+    else:
+        path = 'HYBRID_INFERENCE'
+    print(f"case={number} path={path} rule={result['rule_score']} "
+          f"model={result['llm_score']} final={result['risk_score']} "
+          f"latency_ms={result['latency_ms']}")
+PY
+----
+
+This distinction matters. A skip caused by policy is expected optimization. A
+skip caused by model unavailability is degraded service. Combining both under a
+single “model skipped” percentage would hide an operationally important fact.
+
+== See: inspect process statistics
+
+[source,sh,role="execute",subs=attributes+]
+----
+curl -ksS "$SCORER_ROUTE/api/v1/stats" \
+  | tee /tmp/portfolio-stats.json \
+  | python3 -m json.tool
+----
+
+Statistics are cumulative for the running scorer process, so totals include
+requests from earlier modules. A pod restart resets them. They are useful for
+this guided observation but are not a durable monitoring system or billing
+record.
+
+Ask four questions of the response:
+
+. How many total transactions were processed?
+. How many model calls succeeded?
+. How many calls failed and used fallback?
+. What percentage skipped the model, and does the metric distinguish why?
+
+The answers tell you whether the implementation followed its routing contract.
+They do not tell you whether the decisions were correct. Correctness requires
+labeled outcomes and domain-defined metrics such as false-positive and
+false-negative costs.
+
+== See: compare latency responsibly
+
+Extract the measured request latency from this batch.
+
+[source,sh,role="execute"]
+----
+python3 - <<'PY'
+import json, statistics
+
+results = json.load(open('/tmp/portfolio.json', encoding='utf-8'))['results']
+values = [r['latency_ms'] for r in results]
+print('samples:', len(values))
+print('minimum_ms:', min(values))
+print('median_ms:', statistics.median(values))
+print('maximum_ms:', max(values))
+PY
+----
+
+Three samples are enough to demonstrate instrumentation, not performance at
+scale. A defensible capacity statement requires warm-up, repeated requests,
+concurrency matching the expected audience, percentile distributions, model
+and hardware identity, success rate, and resource saturation evidence.
+
+== See: use the visual workspace
+
+Open the *Fraud Scoring Workspace* tab and choose *Batch Analysis*. Submit the
+same three records. Then open *Statistics*. The UI should communicate the same
+contract as the API: visible signals, model-use status, scorer identity, and
+measured latency. It is an explanation surface, not an approval console.
+
+== Verify
+
+[source,sh,role="execute"]
+----
+python3 - <<'PY'
+import json
+
+batch = json.load(open('/tmp/portfolio.json', encoding='utf-8'))
+assert len(batch['results']) == 3
+scores = [r['rule_score'] for r in batch['results']]
+assert scores == [10, 30, 95], scores
+assert batch['results'][0]['llm_skipped'] is True
+assert batch['results'][2]['llm_skipped'] is True
+assert all(0 <= r['risk_score'] <= 100 for r in batch['results'])
+assert all(r['latency_ms'] >= 0 for r in batch['results'])
+print('Mixed portfolio routing: PASS')
+PY
+----
+
+== Key takeaway
+
+Observability must describe the path taken, not just the final score. Routing,
+fallback, latency, and evidence completeness are operational metrics. Accuracy,
+fairness, and business value are separate questions requiring representative
+data and accountable review.
+
+[.next-nav]
+xref:05-challenge-and-govern.adoc[Challenge and govern the pattern ->]

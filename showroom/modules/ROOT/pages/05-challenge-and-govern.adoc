@@ -1,0 +1,174 @@
+= Challenge and Govern
+:navtitle: Challenge and Govern
+:imagesdir: ../assets/images
+
+== What you will learn
+
+You will test input boundaries, distinguish platform controls from application
+and model controls, and export a review artifact that records both evidence and
+unresolved release gates. This is the point where a persuasive demo becomes an
+honest engineering conversation.
+
+== See: map the control layers
+
+image::governance-layers.svg[Governance layers separating OpenShift platform controls, application policy, model behavior, and human accountability,width=100%]
+
+No single layer makes a consequential AI system safe:
+
+* *OpenShift controls* isolate namespaces, service identities, Secrets,
+  workloads, and network surfaces.
+* *Application controls* validate fields, calculate rules, enforce thresholds,
+  bound model output, and expose fallback.
+* *Model controls* shape and evaluate probabilistic behavior but do not replace
+  authorization or business policy.
+* *Human governance* defines acceptable evidence, impact, review, appeal,
+  monitoring, ownership, and release approval.
+
+The lab demonstrates pieces of the first two layers. It does not certify the
+last two.
+
+== See: confirm platform boundaries
+
+Resolve the namespace and scorer, then inspect only information available to
+your learner identity.
+
+[source,sh,role="execute"]
+----
+test "$(oc project -q)" = "{project_name}"
+oc auth can-i get pods -n "{project_name}"
+oc auth can-i get secrets -n "{project_name}"
+oc auth can-i get nodes
+
+SCORER_HOST="$(oc get route -n "{project_name}" \
+  -l app.kubernetes.io/name=hybrid-fraud-detection \
+  -o custom-columns=NAME:.metadata.name,HOST:.spec.host --no-headers \
+  | awk '$1 ~ /-scorer$/ {print $2; exit}')"
+SCORER_ROUTE="https://$SCORER_HOST"
+----
+
+The expected pattern is permission to inspect the assigned workload without
+cluster-wide node access. Secret visibility depends on the Launchpad learner
+role and should be minimized. Never print a model credential into lab output,
+browser content, screenshots, or exported evidence.
+
+== See: challenge input validation
+
+First send a country value that violates the two-letter API contract.
+
+[source,sh,role="execute",subs=attributes+]
+----
+HTTP_CODE="$(curl -ksS -o /tmp/invalid-country.json -w '%\{http_code}' \
+  -X POST "$SCORER_ROUTE/api/v1/score" \
+  -H 'Content-Type: application/json' \
+  -d '{"amount":50,"currency":"USD","country":"NOT-A-COUNTRY","category":"retail","description":"Synthetic invalid input"}')"
+echo "HTTP $HTTP_CODE"
+python3 -m json.tool /tmp/invalid-country.json
+----
+
+The API should return HTTP 422. This is schema enforcement, not fraud
+detection. It prevents malformed input from quietly entering the scoring path.
+
+Now challenge the batch boundary with an empty list.
+
+[source,sh,role="execute",subs=attributes+]
+----
+EMPTY_CODE="$(curl -ksS -o /tmp/empty-batch.json -w '%\{http_code}' \
+  -X POST "$SCORER_ROUTE/api/v1/batch" \
+  -H 'Content-Type: application/json' \
+  -d '{"transactions":[]}')"
+echo "HTTP $EMPTY_CODE"
+python3 -m json.tool /tmp/empty-batch.json
+----
+
+This should also return 422. Boundary validation protects service behavior,
+but it does not validate whether allowed fields are ethical, lawful, relevant,
+or free from proxy discrimination.
+
+== See: review the evidence chain
+
+Your work now includes environment scope, deterministic calculations, an
+ambiguous-path response, a mixed portfolio, statistics, and negative tests.
+Create a reusable review artifact without copying credentials or sensitive
+content.
+
+[source,sh,role="execute",subs=attributes+]
+----
+mkdir -p "$HOME/hybrid-fraud-evidence"
+python3 - <<'PY'
+import json
+from datetime import datetime, timezone
+from pathlib import Path
+
+def load(path):
+    p = Path(path)
+    return json.loads(p.read_text()) if p.exists() else None
+
+artifact = {
+    'schema_version': '1.0',
+    'created_at': datetime.now(timezone.utc).isoformat(),
+    'purpose': 'Educational review of conditional inference architecture',
+    'evidence': {
+        'readiness': load('/tmp/readiness.json'),
+        'low_case': load('/tmp/low-evidence.json'),
+        'high_case': load('/tmp/high-evidence.json'),
+        'ambiguous_case': load('/tmp/ambiguous.json'),
+        'portfolio': load('/tmp/portfolio.json'),
+        'statistics': load('/tmp/portfolio-stats.json'),
+        'invalid_country_http': 422,
+        'empty_batch_http': 422,
+    },
+    'open_release_gates': [
+        'representative labeled evaluation data',
+        'domain approval of features, rules, thresholds, and weights',
+        'fairness and harmful-disparity evaluation',
+        'privacy, security, legal, risk, and compliance approval',
+        'human review and appeal workflow',
+        'durable monitoring, drift detection, and incident response',
+        'capacity and recovery qualification for the intended load',
+    ],
+    'claim_boundary': 'Not a production fraud detector or automated decision system',
+}
+
+out = Path.home() / 'hybrid-fraud-evidence' / 'policy-review.json'
+out.write_text(json.dumps(artifact, indent=2) + '\n')
+print(out)
+PY
+----
+
+The artifact is useful precisely because it preserves open questions. A report
+that records only passing checks can create false confidence.
+
+== Verify
+
+Confirm negative-test status, artifact structure, and absence of common secret
+fields.
+
+[source,sh,role="execute"]
+----
+test "$HTTP_CODE" = "422"
+test "$EMPTY_CODE" = "422"
+python3 - <<'PY'
+import json
+from pathlib import Path
+
+p = Path.home() / 'hybrid-fraud-evidence' / 'policy-review.json'
+data = json.loads(p.read_text())
+assert data['schema_version'] == '1.0'
+assert len(data['open_release_gates']) >= 7
+assert data['claim_boundary']
+text = p.read_text().lower()
+for forbidden in ('api_key', 'api-key', 'authorization: bearer'):
+    assert forbidden not in text
+print('Governance evidence artifact: PASS')
+PY
+----
+
+== Key takeaway
+
+Reliable decision support comes from layered controls and explicit ownership,
+not from a model score alone. The correct end state for this lab is a working
+pattern plus documented uncertainty—not an assertion that the sample is ready
+to approve, deny, or investigate real people or transactions.
+
+[.next-nav]
+xref:conclusion.adoc[Review what you proved ->]
