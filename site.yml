@@ -1,7 +1,7 @@
 site:
   title: Hybrid Fraud Detection on Intel Xeon
   url: https://github.com/jkershawrh/hybrid-fraud-detection
-  start_page: fraud-detection::index.adoc
+  start_page: hybrid-fraud-detection::index.adoc
 
 content:
   sources:

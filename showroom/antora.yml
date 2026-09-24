@@ -1,4 +1,4 @@
-name: fraud-detection
+name: hybrid-fraud-detection
 version: main
 title: Hybrid Fraud Detection on Intel Xeon
 start_page: index.adoc
