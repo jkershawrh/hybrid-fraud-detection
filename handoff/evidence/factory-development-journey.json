@@ -1,0 +1,18 @@
+{
+  "schema_version": "demo-story.redhat-intel.com/factory-development-journey/v1",
+  "candidate": "hybrid-fraud-detection",
+  "source_revision": "14fad40be5904e293c5061bdaa09f8be31db7f7f",
+  "workflow_run": "https://github.com/jkershawrh/hybrid-fraud-detection/actions/runs/36062736191",
+  "checks": {
+    "contracts": "PASS",
+    "lint": "PASS",
+    "unit_integration_benchmarks": "PASS",
+    "helm_lint": "PASS",
+    "publication": "PASS",
+    "showroom_build": "PASS",
+    "container_build": "PASS",
+    "artifact_signature_and_attestations": "PASS",
+    "exact_digest_pull": "PASS"
+  },
+  "certification_claimed": false
+}

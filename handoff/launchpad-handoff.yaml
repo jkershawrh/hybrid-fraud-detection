@@ -1,0 +1,114 @@
+schema_version: demo-story.redhat-intel.com/launchpad-handoff/v1
+factory_receipt:
+  identity:
+    catalog_item_id: hybrid-fraud-detection
+    display_name: "Hybrid Fraud Detection — Explainable Decision Casebook"
+    proposed_track: financial_services_ai
+    proposed_learning_level: "101"
+  authority:
+    orderable: false
+    certified: false
+    promotion_eligible: false
+    may_modify_launchpad_catalog: false
+    may_provision: false
+    may_publish: false
+  presentation_source:
+    repository: https://github.com/jkershawrh/hybrid-fraud-detection
+    revision: "14fad40be5904e293c5061bdaa09f8be31db7f7f"
+    tree_dirty: false
+  artifacts:
+    workload:
+      image: ghcr.io/jkershawrh/hybrid-fraud-detection@sha256:f217fccd35f5a3508ca142671941180fae6a0a1b031ec6a8f045473ad2bae237
+      architecture: linux/amd64
+      source_repository: https://github.com/jkershawrh/hybrid-fraud-detection
+      source_revision: "14fad40be5904e293c5061bdaa09f8be31db7f7f"
+      release_receipt: {path: evidence/workload-artifact-release.json, sha256: "3d90adab94b1d547b6ddbe49d6c3ddb175a10505ee60d660def23455f3595893"}
+    presentation:
+      image: ghcr.io/jkershawrh/hybrid-fraud-detection@sha256:f217fccd35f5a3508ca142671941180fae6a0a1b031ec6a8f045473ad2bae237
+      architecture: linux/amd64
+      source_repository: https://github.com/jkershawrh/hybrid-fraud-detection
+      source_revision: "14fad40be5904e293c5061bdaa09f8be31db7f7f"
+      release_receipt: {path: evidence/presentation-artifact-release.json, sha256: "b50d037fd7b47ded62b5aec277eab0119b7e616164e28bd35b97e7dff92496ae"}
+    showroom_content:
+      repository: https://github.com/jkershawrh/hybrid-fraud-detection
+      revision: "14fad40be5904e293c5061bdaa09f8be31db7f7f"
+      bundle_digest: "sha256:863a8db56d4be4653e166a80a41e233636cd1e110a75e31e666e86687b865d2b"
+  factory_evidence:
+    development_journey: {path: evidence/factory-development-journey.json, sha256: "595633697fc56c209b2b936f6b509837d7ae109bfb3ae98e5f6c99e79f82fce4"}
+    presentation_verification: {path: evidence/presentation-verification.json, sha256: "8fc415a35104a0ee984a2205d8eca90e67ae192118d5a99fac838b1edf9daf23"}
+    zero_residue: {path: evidence/factory-zero-residue.json, sha256: "88a6176d79c4ad003d19a44486db66e0c10b552f559967504d2dd6a84bc2121b"}
+  contracts:
+    demo_blueprint: README.md
+    story_brief: showroom/modules/ROOT/pages/index.adoc
+    validation_matrix: tests/validation_matrix.yaml
+    claim_registry: tests/claim_registry.yaml
+    benchmark_rubric: tests/benchmark_rubric.yaml
+  known_blockers:
+    - The combined image supplies both the scoring API and interactive casebook UI; it is not a separate stage presentation artifact.
+    - Browser-level visual verification, Launchpad trusted rendering, live-seat certification, capacity graduation, reclaim verification, promotion, and publication remain independent gates.
+    - Factory resource values are chart requests, not observed capacity evidence; factory maximum certified seats remains zero.
+proposed_launchpad_intake:
+  api_version: launchpad.redhat.com/v1alpha1
+  catalog:
+    catalog_item_id: hybrid-fraud-detection
+    display_name: "Hybrid Fraud Detection — Explainable Decision Casebook"
+    description: "An educational hybrid rule-and-model decision casebook awaiting independent Launchpad review."
+    category: quickstart
+    version: 0.1.0
+    status: draft
+  learning:
+    learning_level: "101"
+    learning_stage: Discover
+    experience_type: guided_quickstart
+    prerequisites: []
+    recommended_next_items: []
+    journey_role: core
+    specialty_family: responsible_financial_ai
+    branches_from: null
+    returns_to: null
+    shared_blueprint: red-hat-intel-hybrid-decision-ai-v1
+    solution_family: financial_services_ai
+  sources:
+    showroom: {repo_url: "https://github.com/jkershawrh/hybrid-fraud-detection", revision: "14fad40be5904e293c5061bdaa09f8be31db7f7f", playbook: site.yml, start_path: showroom}
+    workload: {repo_url: "https://github.com/jkershawrh/hybrid-fraud-detection", revision: "14fad40be5904e293c5061bdaa09f8be31db7f7f", deploy_path: chart}
+  runtime:
+    deployment_type: helm
+    deployment_class: shared_namespace
+    deployment_scope: participant_namespace
+    supported_architectures: [linux/amd64]
+    supported_openshift_versions: [review-required]
+    required_operators: []
+    required_capabilities: [openshift, showroom, optional_model_endpoint]
+    required_models: []
+    exposure_policy: participant
+    ingress: participant-routes
+    egress: model-endpoint-only-when-configured
+    cluster_scoped_resources: false
+    cleanup_owner: launchpad-workshop-reclaim
+    workload:
+      helm_values:
+        app.image: ghcr.io/jkershawrh/hybrid-fraud-detection@sha256:f217fccd35f5a3508ca142671941180fae6a0a1b031ec6a8f045473ad2bae237
+        app.imagePullPolicy: IfNotPresent
+        ui.enabled: true
+        model.endpointFromSecret: true
+    resources:
+      steady_per_seat: {cpu_millicores: 350, memory_mib: 512, pods: 1, storage_gib: 1}
+      peak_per_seat: {cpu_millicores: 1500, memory_mib: 1024, pods: 1}
+      workshop_shared: {cpu_millicores: 0, memory_mib: 0, pods: 0, storage_gib: 0}
+      provisioning_concurrency: 1
+      observed_largest_run: 1
+      safety_margin_percent: 20
+      evidence_state: requested_values_only_not_capacity_evidence
+    tabs:
+      - {id: casebook, title: Casebook, source: workload.route.ui}
+      - {id: guide, title: Lab Guide, source: showroom.guide}
+      - {id: terminal, title: Terminal, source: showroom.terminal}
+    readiness_checks: [scorer-ready, casebook-ui-ready, scorer-route-accessible, casebook-route-accessible, synthetic-score-smoke]
+  certification_proposal:
+    stage: factory-development-verified
+    max_workshop_seats: 0
+    promotion_sequence: []
+    proof_contract_draft: handoff/catalog-certification.proposed.yaml
+    launchpad_evidence_required: [trusted-render-review, artifact-and-destination-qualification, one-seat-certification, capacity-certification, reclaim-zero-residue]
+  requested_pipeline_actions: [approve_source, run_discovery]
+  subsequent_independent_gates: [generate_draft, trusted_render_review, artifact_review, run_one_seat_certification, request_review, scale_certification, promote]

@@ -1,0 +1,17 @@
+{
+  "schema_version": "demo-story.redhat-intel.com/presentation-verification/v1",
+  "source_revision": "14fad40be5904e293c5061bdaa09f8be31db7f7f",
+  "workflow_run": "https://github.com/jkershawrh/hybrid-fraud-detection/actions/runs/36062736191",
+  "presentation_role": "interactive-hybrid-decision-casebook-ui",
+  "checks": {
+    "ui_source_in_combined_image": "PASS",
+    "chart_ui_sidecar_command": "PASS",
+    "chart_ui_service_and_route": "PASS",
+    "showroom_content_build": "PASS"
+  },
+  "browser_visual_verification_claimed": false,
+  "live_launchpad_ui_verification_claimed": false,
+  "launchpad_trusted_render_claimed": false,
+  "certified": false,
+  "promotion_eligible": false
+}

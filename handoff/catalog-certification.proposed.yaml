@@ -1,0 +1,15 @@
+api_version: launchpad.redhat.com/v1alpha1
+kind: CertificationProposal
+metadata:
+  catalog_item_id: hybrid-fraud-detection
+spec:
+  factory_authority:
+    certified: false
+    promotion_eligible: false
+    max_workshop_seats: 0
+  required_independent_gates:
+    - trusted_render_review
+    - artifact_and_destination_qualification
+    - one_seat_certification
+    - capacity_certification
+    - reclaim_zero_residue

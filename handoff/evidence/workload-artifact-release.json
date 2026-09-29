@@ -1,0 +1,21 @@
+{
+  "schema_version": "demo-story.redhat-intel.com/artifact-release/v1",
+  "component": "workload",
+  "distribution": "combined-api-and-interactive-casebook-image",
+  "source_repository": "https://github.com/jkershawrh/hybrid-fraud-detection",
+  "source_revision": "14fad40be5904e293c5061bdaa09f8be31db7f7f",
+  "workflow_run": "https://github.com/jkershawrh/hybrid-fraud-detection/actions/runs/36062736191",
+  "image": "ghcr.io/jkershawrh/hybrid-fraud-detection@sha256:f217fccd35f5a3508ca142671941180fae6a0a1b031ec6a8f045473ad2bae237",
+  "architecture": "linux/amd64",
+  "workflow_checks": {
+    "source_revision_guard": "PASS",
+    "container_build": "PASS",
+    "spdx_sbom_generated": "PASS",
+    "keyless_signature_verified": "PASS",
+    "spdx_attestation_verified": "PASS",
+    "source_provenance_attestation_verified": "PASS"
+  },
+  "exact_digest_pull_verified": true,
+  "certified": false,
+  "promotion_eligible": false
+}

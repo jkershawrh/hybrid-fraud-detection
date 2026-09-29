@@ -1,0 +1,11 @@
+{
+  "schema_version": "demo-story.redhat-intel.com/factory-zero-residue/v1",
+  "candidate": "hybrid-fraud-detection",
+  "scope": "factory-receipt-authoring",
+  "cluster_mutation_performed": false,
+  "image_build_triggered": false,
+  "launchpad_modified": false,
+  "residue_count": 0,
+  "target_cleanup_claimed": false,
+  "reason": "This receipt-only convergence did not provision a target environment; Launchpad retains independent cleanup authority."
+}
