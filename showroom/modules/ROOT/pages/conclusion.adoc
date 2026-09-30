@@ -30,6 +30,20 @@ Your policy review file records both the evidence you observed and the gates
 that remain open. That separation helps a team avoid turning a successful demo
 into an unsupported production claim.
 
+== Keep your takeaway, clean up the platform
+
+Before the lab ends, review `$HOME/hybrid-fraud-evidence/policy-review.json`.
+Retain only a sanitized takeaway artifact that contains synthetic evidence and
+no credentials, tokens, customer data, or other sensitive values. Download it
+to an approved location outside the lab if you want to keep it; files left in
+the terminal workspace are not a durable archive.
+
+You do not need to delete the project yourself. When the workshop ends,
+Launchpad reclaims the entire seat namespace, revokes its model credential, and
+removes the workload, routes, secrets, and storage as zero-residue platform
+cleanup. A sanitized copy that you deliberately retained outside the lab is a
+learner takeaway, not leftover platform state.
+
 == What this lab does not prove
 
 It does not establish fraud-detection accuracy, fairness, regulatory

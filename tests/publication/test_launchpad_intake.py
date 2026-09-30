@@ -126,6 +126,19 @@ def test_showroom_owns_and_explains_the_workspace_contract() -> None:
         assert stage in ui
 
 
+def test_conclusion_explains_artifact_retention_and_platform_cleanup() -> None:
+    conclusion = (
+        ROOT / "showroom/modules/ROOT/pages/conclusion.adoc"
+    ).read_text()
+    normalized = " ".join(conclusion.split())
+
+    assert "sanitized" in normalized.lower()
+    assert "outside the lab" in normalized.lower()
+    assert "reclaims the entire seat namespace" in normalized
+    assert "revokes its model credential" in normalized
+    assert "zero-residue platform cleanup" in normalized
+
+
 def test_helm_chart_exposes_the_participant_ui() -> None:
     deployment = (ROOT / "chart/templates/deployment.yaml").read_text()
     service = (ROOT / "chart/templates/service.yaml").read_text()
