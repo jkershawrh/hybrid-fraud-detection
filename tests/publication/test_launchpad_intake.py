@@ -19,6 +19,14 @@ def test_base_and_smoke_images_are_immutable() -> None:
     assert IMMUTABLE_IMAGE.fullmatch(base_image)
 
 
+def test_runtime_removes_unused_node_payload_before_installing_python_dependencies() -> None:
+    containerfile = (ROOT / "src/Containerfile").read_text()
+
+    assert "USER 0" in containerfile
+    assert "rpm -e npm nodejs nodejs-docs nodejs-full-i18n" in containerfile
+    assert "USER 1001" in containerfile
+
+
 def test_candidate_publisher_is_manual_scoped_and_signed() -> None:
     workflow = (ROOT / ".github/workflows/ci.yaml").read_text()
     document = yaml.safe_load(workflow)
@@ -44,6 +52,9 @@ def test_candidate_publisher_is_manual_scoped_and_signed() -> None:
     assert "cosign attest --yes" in workflow
     assert "cosign verify-attestation" in workflow
     assert "anchore/sbom-action@" in workflow
+    assert "anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2" in workflow
+    assert "severity-cutoff: critical" in workflow
+    assert "only-fixed: true" in workflow
     assert "--digestfile" in workflow
     assert "ghcr.io/jkershawrh/hybrid-fraud-detection" in workflow
 
